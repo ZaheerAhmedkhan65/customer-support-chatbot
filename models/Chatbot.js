@@ -1,4 +1,4 @@
-const { pool } = require('../config/database');
+const pool  = require('../config/database');
 
 class Chatbot {
     static async create(userId, businessName, businessEmail) {

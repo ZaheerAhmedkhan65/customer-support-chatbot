@@ -6,14 +6,15 @@ const router = express.Router();
 router.get('/chatbot.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.sendFile(path.join(__dirname, '../../public/chatbot.js'));
+    console.log(path.join(__dirname, '../public/chatbot.js'));
+    res.sendFile(path.join(__dirname, '../public/chatbot.js'));
 });
 
 // Serve chatbot.css file
 router.get('/chatbot.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.sendFile(path.join(__dirname, '../../public/chatbot.css'));
+    res.sendFile(path.join(__dirname, 'public/chatbot.css'));
 });
 
 // Serve widget test page

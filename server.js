@@ -63,26 +63,26 @@ const isAuthenticated = (req) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Serve static files from backend/public
+// Serve static files from assets directory
 app.use(express.static(path.join(__dirname, 'assets')));
 
-// Serve chatbot.js specifically from root public directory
+// Serve chatbot.js specifically from public directory
 app.get('/chatbot.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, '..', 'public', 'chatbot.js'));
+    res.sendFile(path.join(__dirname, 'public', 'chatbot.js'));
 });
 
-// Serve chatbot.css specifically from root public directory
+// Serve chatbot.css specifically from public directory
 app.get('/chatbot.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, '..', 'public', 'chatbot.css'));
+    res.sendFile(path.join(__dirname, 'public', 'chatbot.css'));
 });
 
 // Middleware to make user available to all views

@@ -1,5 +1,5 @@
 const express = require('express');
-const { pool } = require('../config/database');
+const pool = require('../config/database');
 const Chatbot = require('../models/Chatbot');
 const geminiService = require('../services/geminiService');
 const router = express.Router();

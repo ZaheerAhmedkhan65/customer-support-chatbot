@@ -31,7 +31,6 @@ cd customer-support-chatbot
 ### 2. Install dependencies
 
 ```bash
-cd backend
 npm install
 ```
 
@@ -105,36 +104,35 @@ Copy the embed script from the dashboard and paste it before the closing `</body
 
 ```
 customer-support-chatbot/
-├── backend/
-│   ├── config/
-│   │   └── database.js      # Database configuration
-│   ├── middleware/
-│   │   └── auth.js          # Authentication middleware
-│   ├── models/
-│   │   ├── Chatbot.js       # Chatbot model
-│   │   ├── Conversation.js  # Conversation model
-│   │   └── User.js          # User model
-│   ├── routes/
-│   │   ├── auth.js          # Authentication routes
-│   │   ├── chatbot.js       # Chatbot API routes
-│   │   ├── chat.js          # Chat API routes
-│   │   └── embed.js         # Embed routes
-│   ├── services/
-│   │   └── geminiService.js # Google Gemini AI service
-│   ├── views/
-│   │   ├── dashboard.ejs    # Dashboard page
-│   │   ├── index.ejs        # Landing page
-│   │   ├── signin.ejs       # Sign in page
-│   │   └── signup.ejs       # Sign up page
-│   ├── public/
-│   │   └── styles.css       # Dashboard styles
-│   ├── server.js            # Main server file
-│   └── package.json
-├── public/
-│   ├── chatbot.js           # Embeddable chatbot widget
-│   ├── chatbot.css          # Chatbot styles
-│   └── widget.html          # Widget template
-└── README.md
+├── config/
+│   └── database.js      # Database configuration
+├── middleware/
+│   └── auth.js          # Authentication middleware
+├── models/
+│   ├── Chatbot.js       # Chatbot model
+│   ├── Conversation.js  # Conversation model
+│   └── User.js          # User model
+├── routes/
+│   ├── auth.js          # Authentication routes
+│   ├── chatbot.js       # Chatbot API routes
+│   ├── chat.js          # Chat API routes
+│   └── embed.js         # Embed routes
+├── services/
+│   └── geminiService.js # Google Gemini AI service
+├── views/
+│   ├── dashboard.ejs    # Dashboard page
+│   ├── index.ejs        # Landing page
+│   ├── signin.ejs       # Sign in page
+│   └── signup.ejs       # Sign up page
+├── assets/
+│   └── styles.css       # Dashboard styles
+├── server.js            # Main server file
+└── package.json
+├── public
+├── chatbot.js           # Embeddable chatbot widget
+├── chatbot.css          # Chatbot styles
+└── widget.html          # Widget template
+├── README.md
 ```
 
 ## API Endpoints
