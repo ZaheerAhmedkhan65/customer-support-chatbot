@@ -64,7 +64,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Serve static files from backend/public
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'assets')));
 
 // Serve chatbot.js specifically from root public directory
 app.get('/chatbot.js', (req, res) => {
