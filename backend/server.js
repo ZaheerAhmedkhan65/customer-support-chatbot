@@ -48,9 +48,9 @@ app.use('/api/', limiter);
 const isAuthenticated = (req) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    
+
     if (!token) return false;
-    
+
     try {
         const user = jwt.verify(token, process.env.JWT_SECRET);
         return user;
@@ -89,7 +89,7 @@ app.get('/chatbot.css', (req, res) => {
 app.use((req, res, next) => {
     // Check for token in cookie, Authorization header, or query string
     const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
-    
+
     if (token) {
         try {
             const user = jwt.verify(token, process.env.JWT_SECRET);
@@ -107,7 +107,7 @@ app.use((req, res, next) => {
         res.locals.isAuthenticated = false;
         res.locals.token = '';
     }
-    
+
     next();
 });
 
@@ -120,9 +120,9 @@ const embedRoutes = require('./routes/embed');
 // Index route
 app.get('/', (req, res) => {
     const token = req.headers['authorization']?.split(' ')[1] || req.query.token;
-    res.render('index', { 
-        user: res.locals.user, 
-        token: token || '' 
+    res.render('index', {
+        user: res.locals.user,
+        token: token || ''
     });
 });
 
@@ -135,32 +135,32 @@ app.use('/', embedRoutes);
 app.get('/dashboard', async (req, res) => {
     // Check for token in cookie, Authorization header, or query string
     const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
-    
+
     if (!token) {
         return res.redirect('/auth/signin');
     }
-    
+
     try {
         const user = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         // Get success/error messages from cookies
         const success = req.cookies.success || null;
         const error = req.cookies.error || null;
         res.clearCookie('success');
         res.clearCookie('error');
-        
+
         // Get tab from query param
         const tab = req.query.tab || 'settings';
-        
+
         // Fetch chatbot data
         const Chatbot = require('./models/Chatbot');
         const Conversation = require('./models/Conversation');
-        
+
         let chatbot = await Chatbot.findByUserId(user.id);
         let knowledge = [];
         let embedCode = '';
         let conversations = [];
-        
+
         if (chatbot) {
             knowledge = await Chatbot.getKnowledge(chatbot.id);
             const scriptUrl = `${req.protocol}://${req.get('host')}/chatbot.js`;
@@ -170,24 +170,24 @@ app.get('/dashboard', async (req, res) => {
     data-org-id="${user.org_id}">
 </script>`;
         }
-        
+
         // Fetch conversations for analytics
         try {
             conversations = await Conversation.getByOrgId(user.org_id, 50);
         } catch (err) {
             console.error('Error fetching conversations:', err);
         }
-        
-        res.render('dashboard', { 
-            user, 
-            token, 
-            success, 
-            error, 
-            tab, 
-            chatbot, 
-            knowledge, 
-            embedCode, 
-            conversations 
+
+        res.render('dashboard', {
+            user,
+            token,
+            success,
+            error,
+            tab,
+            chatbot,
+            knowledge,
+            embedCode,
+            conversations
         });
     } catch (err) {
         return res.redirect('/auth/signin');
@@ -209,11 +209,6 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 const PORT = process.env.PORT || 3000;
 
-initDatabase().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}).catch(err => {
-    console.error('Failed to initialize database:', err);
-    process.exit(1);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
