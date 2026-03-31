@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - AI Customer Support Chatbot</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Create Your Account</h2>
+                <p>Start providing 24/7 AI customer support</p>
+            </div>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="error-message"><%= error %></div>
+            <% } %>
+            <form id="signupForm" method="POST" action="/auth/signup">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="At least 6 characters">
+                </div>
+                <button type="submit" class="btn-primary-full">Sign Up</button>
+            </form>
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/auth/signin">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
