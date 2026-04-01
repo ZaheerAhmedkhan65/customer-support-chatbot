@@ -1,213 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Customer Support Chatbot - 24/7 Automated Support</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <span class="logo-icon">🤖</span>
-                <span class="logo-text">AI Support Bot</span>
+<!-- Hero Section -->
+<section class="py-5" style="padding: 8rem 0 4rem;">
+    <div class="container">
+        <div class="row justify-content-between">
+            <div class="col-lg-6 animate__animated animate__fadeInDown">
+                <h1 class="display-4 fw-bold mb-4">AI Customer Support Built for Modern Websites</h1>
+                <p class="lead fs-4 mb-4" style="opacity: 0.95;">Never miss a customer inquiry again. Our AI chatbot provides instant, accurate responses to your customers anytime, anywhere.</p>
+                <div class="d-flex justify-content-start gap-3 flex-wrap animate__animated animate__fadeInUp animate__delay-1s">
+                    <% if(user) {%>
+                        <a href="/dashboard" class="btn btn-primary btn-lg px-4">Go to Dashboard</a>
+                    <%}else{%>
+                        <a href="/auth/signup" class="btn btn-primary btn-lg px-4">Start Free Trial</a>
+                    <%}%>
+                    <a href="#demo" class="btn btn-outline-primary btn-lg px-4">Watch Demo</a>
+                </div>
             </div>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <% if (typeof user !== 'undefined' && user) { %>
-                    <span class="user-email-nav"><%= user.email %></span>
-                    <a href="/dashboard?token=<%= typeof token !== 'undefined' ? token : '' %>" class="btn-secondary">Dashboard</a>
-                    <a href="#" onclick="logout(); return false;" class="btn-primary">Logout</a>
-                <% } else { %>
-                    <a href="/auth/signin" class="btn-secondary">Sign In</a>
-                    <a href="/auth/signup" class="btn-primary">Get Started</a>
-                <% } %>
+            <div class="col-lg-6 d-flex align-items-center justify-content-center gy-5 animate__animated animate__fadeInDown">
+                <img src="/uploads/demo.png" alt="Chatbot Preview" class="img-fluid animate__animated animate__bounceIn" height="250">
             </div>
         </div>
-    </nav>
+    </div>
+</section>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>AI Customer Support That Works 24/7</h1>
-            <p>Never miss a customer inquiry again. Our AI chatbot provides instant, accurate responses to your
-                customers anytime, anywhere.</p>
-            <div class="hero-buttons">
-                <a href="/auth/signup" class="btn-primary-large">Start Free Trial</a>
-                <a href="#demo" class="btn-secondary-large">Watch Demo</a>
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Why Businesses Choose Support<span class="text-muted">Bot</span>?</h2>
+        <div class="row g-4">
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Plug & Play</h3>
+                    <p class="card-text">Add the chatbot to your site with a single script tag. No coding required. Works instantly on any website.</p>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Admin Controlled</h3>
+                    <p class="card-text">You control exactly what the AI knows and answers. Add FAQs, policies, product details, and more.</p>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Always Online</h3>
+                    <p class="card-text">Your customers get 24/7 support even when you're sleeping. Never lose a sale due to unanswered questions.</p>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Analytics Dashboard</h3>
+                    <p class="card-text">Track conversations, customer satisfaction, and common questions. Make data-driven decisions.</p>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Customizable</h3>
+                    <p class="card-text">Match the chatbot to your brand with custom colors, position, and welcome messages.</p>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4 card-title">Secure & Private</h3>
+                    <p class="card-text">Your data is encrypted and secure. GDPR compliant with full control over your information.</p>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <section id="features" class="features">
-        <h2>Why Choose Our AI Chatbot?</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🔌</div>
-                <h3>Plug & Play</h3>
-                <p>Add the chatbot to your site with a single script tag. No coding required. Works instantly on any
-                    website.</p>
-                <code
-                    class="demo-code">&lt;script src="https://your-domain/chatbot.js" data-org-id="your_id"&gt;&lt;/script&gt;</code>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎮</div>
-                <h3>Admin Controlled</h3>
-                <p>You control exactly what the AI knows and answers. Add FAQs, policies, product details, and more.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⏰</div>
-                <h3>Always Online</h3>
-                <p>Your customers get 24/7 support even when you're sleeping. Never lose a sale due to unanswered
-                    questions.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Analytics Dashboard</h3>
-                <p>Track conversations, customer satisfaction, and common questions. Make data-driven decisions.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎨</div>
-                <h3>Customizable</h3>
-                <p>Match the chatbot to your brand with custom colors, position, and welcome messages.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Secure & Private</h3>
-                <p>Your data is encrypted and secure. GDPR compliant with full control over your information.</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="demo" class="demo">
-        <h2>See It In Action</h2>
-        <div class="demo-container">
-            <div class="demo-info">
+<!-- Demo Section -->
+<section id="demo" class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">See It In Action</h2>
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 animate__animated animate__fadeInLeft">
                 <h3>Live Preview</h3>
-                <p>Click the chat button on the right to see how our AI assistant responds to customer questions
-                    instantly.</p>
-                <ul>
-                    <li>✅ Instant responses</li>
-                    <li>✅ 24/7 availability</li>
-                    <li>✅ Natural conversations</li>
-                    <li>✅ Smart knowledge base</li>
+                <p class="lead">Click the chat button on the right to see how our AI assistant responds to customer questions instantly.</p>
+                <ul class="list-unstyled fs-5">
+                    <li class="mb-2">- Instant responses</li>
+                    <li class="mb-2">- 24/7 availability</li>
+                    <li class="mb-2">- Natural conversations</li>
+                    <li class="mb-2">- Smart knowledge base</li>
                 </ul>
-                <a href="/auth/signup" class="btn-primary">Start Your Free Trial →</a>
+                <% if(user) {%>
+                    <a href="/dashboard?tab=embed" class="btn btn-primary btn-lg px-4">Get embed code</a>
+                <%}else{%>
+                    <a href="/auth/signup" class="btn btn-primary btn-lg mt-3 animate__animated animate__pulse animate__infinite">Start Your Free Trial →</a>
+                <%}%>
             </div>
-            <div class="demo-preview">
-                <img src="https://via.placeholder.com/400x600?text=Chatbot+Preview" alt="Chatbot Preview">
+            <div class="col-lg-6 text-center animate__animated animate__fadeInRight">
+                <img src="/uploads/preview.png" alt="Chatbot Preview" class="img-fluid animate__animated animate__bounceIn">
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <section id="pricing" class="pricing">
-        <h2>Simple, Transparent Pricing</h2>
-        <div class="pricing-grid">
-            <div class="pricing-card">
-                <h3>Starter</h3>
-                <div class="price">$29<span>/month</span></div>
-                <ul>
-                    <li>1,000 conversations/month</li>
-                    <li>Basic knowledge base</li>
-                    <li>Email support</li>
-                    <li>Basic analytics</li>
-                </ul>
-                <a href="/auth/signup" class="btn-secondary">Get Started</a>
+<!-- Pricing Section -->
+<section id="pricing" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Simple, Transparent Pricing</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4">Starter</h3>
+                    <div class="display-4 fw-bold my-3">$0<span class="fs-5 text-muted fw-normal">/month</span></div>
+                    <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                        <li class="mb-2">✓ 1,000 conversations/month</li>
+                        <li class="mb-2">✓ Basic knowledge base</li>
+                        <li class="mb-2">✓ Email support</li>
+                        <li class="mb-2">✓ Basic analytics</li>
+                    </ul>
+                    <a href="/auth/signup" class="btn btn-outline-primary mt-auto">Get Started</a>
+                </div>
             </div>
-            <div class="pricing-card popular">
-                <div class="popular-badge">Most Popular</div>
-                <h3>Professional</h3>
-                <div class="price">$79<span>/month</span></div>
-                <ul>
-                    <li>10,000 conversations/month</li>
-                    <li>Advanced knowledge base</li>
-                    <li>Priority support</li>
-                    <li>Advanced analytics</li>
-                    <li>Custom branding</li>
-                    <li>API access</li>
-                </ul>
-                <a href="/auth/signup" class="btn-primary">Get Started</a>
+            <div class="col-md-4 animate__animated animate__zoomIn" style="animation-delay: 0.2s;">
+                <div class="card h-100 shadow border-primary border-2 text-center p-4 position-relative">
+                    <span class="badge bg-primary position-absolute top-0 start-50 translate-middle">Most Popular</span>
+                    <h3 class="h4">Professional</h3>
+                    <div class="display-4 fw-bold my-3">$7<span class="fs-5 text-muted fw-normal">/month</span></div>
+                    <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                        <li class="mb-2">✓ 5,000 conversations/month</li>
+                        <li class="mb-2">✓ Advanced knowledge base</li>
+                        <li class="mb-2">✓ Priority support</li>
+                        <li class="mb-2">✓ Advanced analytics</li>
+                        <li class="mb-2">✓ Custom branding</li>
+                        <li class="mb-2">✓ API access</li>
+                    </ul>
+                    <a href="/auth/signup" class="btn btn-primary mt-auto">Get Started</a>
+                </div>
             </div>
-            <div class="pricing-card">
-                <h3>Enterprise</h3>
-                <div class="price">Custom</div>
-                <ul>
-                    <li>Unlimited conversations</li>
-                    <li>Custom AI training</li>
-                    <li>24/7 phone support</li>
-                    <li>Dedicated account manager</li>
-                    <li>SLA guarantee</li>
-                    <li>On-premise deployment</li>
-                </ul>
-                <a href="#" class="btn-secondary">Contact Sales</a>
+            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                    <h3 class="h4">Enterprise</h3>
+                    <div class="display-4 fw-bold my-3">Custom</div>
+                    <ul class="list-unstyled text-start mx-auto" style="max-width: 200px;">
+                        <li class="mb-2">✓ Unlimited conversations</li>
+                        <li class="mb-2">✓ Custom AI training</li>
+                        <li class="mb-2">✓ 24/7 phone support</li>
+                        <li class="mb-2">✓ Dedicated account manager</li>
+                        <li class="mb-2">✓ SLA guarantee</li>
+                        <li class="mb-2">✓ On-premise deployment</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline-primary mt-auto">Contact Sales</a>
+                </div>
             </div>
         </div>
-    </section>
-
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>AI Support Bot</h4>
-                <p>Intelligent customer support for modern businesses.</p>
-            </div>
-            <div class="footer-section">
-                <h4>Product</h4>
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="#demo">Demo</a>
-            </div>
-            <div class="footer-section">
-                <h4>Company</h4>
-                <a href="#">About</a>
-                <a href="#">Blog</a>
-                <a href="#">Contact</a>
-            </div>
-            <div class="footer-section">
-                <h4>Legal</h4>
-                <a href="#">Privacy</a>
-                <a href="#">Terms</a>
-                <a href="#">Security</a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Demo Chatbot for the homepage -->
-    <script>
-        // This would be replaced with actual embed code in production
-        console.log('Demo chatbot ready');
-        
-        // Logout function
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/';
-        }
-        
-        // Check if user is logged in via localStorage and update nav
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || 'null');
-            
-            if (token && user) {
-                const navLinks = document.querySelector('.nav-links');
-                
-                // Check if already showing logged in state from server
-                if (!navLinks.querySelector('.user-email-nav')) {
-                    // Update nav to show logged in state
-                    navLinks.innerHTML = `
-                        <a href="#features">Features</a>
-                        <a href="#pricing">Pricing</a>
-                        <span class="user-email-nav">${user.email}</span>
-                        <a href="/dashboard" class="btn-secondary">Dashboard</a>
-                        <a href="#" onclick="logout(); return false;" class="btn-primary">Logout</a>
-                    `;
-                }
-            }
-        });
-    </script>
-</body>
-
-</html>
+    </div>
+</section>

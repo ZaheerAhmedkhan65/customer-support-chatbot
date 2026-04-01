@@ -126,18 +126,18 @@
                     background: ${config.themeColor};
                     color: white;
                     padding: 16px;
-                    text-align: center;
+                    text-align: start;
                 }
                 
                 .chatbot-header h3 {
                     margin: 0;
-                    font-size: 18px;
+                    font-size: 25px;
                 }
                 
                 .chatbot-header p {
                     margin: 4px 0 0;
                     font-size: 12px;
-                    opacity: 0.9;
+                    opacity: 0.6;
                 }
                 
                 .chatbot-messages {
@@ -145,6 +145,7 @@
                     overflow-y: auto;
                     padding: 16px;
                     background: #f9fafb;
+                    scrollbar-width: thin;
                 }
                 
                 .message {
@@ -169,7 +170,7 @@
                 }
                 
                 .message-content {
-                    max-width: 70%;
+                    max-width: 80%;
                     padding: 10px 14px;
                     border-radius: 18px;
                     word-wrap: break-word;
