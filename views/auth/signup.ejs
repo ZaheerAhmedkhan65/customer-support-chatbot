@@ -1,0 +1,40 @@
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow animate__animated animate__fadeInUp">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4 animate__animated animate__fadeInDown">
+                        <h2 class="fw-bold">Create Your Account</h2>
+                        <p class="text-muted">Start providing 24/7 AI customer support</p>
+                    </div>
+                    
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <form id="signupForm" method="POST" action="/auth/signup">
+                        <div class="mb-3 animate__animated animate__fadeInLeft">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required 
+                                   placeholder="you@example.com">
+                        </div>
+                        <div class="mb-3 animate__animated animate__fadeInRight">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   placeholder="At least 6 characters">
+                        </div>
+                        <div class="d-grid animate__animated animate__fadeInUp">
+                            <button type="submit" class="btn btn-primary btn-lg">Sign Up</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4 animate__animated animate__fadeIn">
+                        <p class="mb-0">Already have an account? <a href="/auth/signin" class="text-decoration-none">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

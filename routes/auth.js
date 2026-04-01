@@ -6,13 +6,13 @@ const router = express.Router();
 router.get('/signup', (req, res) => {
     const error = req.cookies.error || null;
     res.clearCookie('error');
-    res.render('signup', { error });
+    res.render('auth/signup', { error });
 });
 
 router.get('/signin', (req, res) => {
     const error = req.cookies.error || null;
     res.clearCookie('error');
-    res.render('signin', { error });
+    res.render('auth/signin', { error });
 });
 
 router.post('/signup', async (req, res) => {

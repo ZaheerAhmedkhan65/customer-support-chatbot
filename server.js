@@ -4,17 +4,21 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
+require('dotenv').config();;
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const { initDatabase } = require('./config/database');
-
-dotenv.config();
+const expressLayouts = require("express-ejs-layouts");
 
 const app = express();
 
 // Trust proxy for correct protocol detection behind Vercel's load balancer
-app.set('trust proxy', true);
+// Using 'loopback' in development and specific trust for production
+if (process.env.NODE_ENV === 'production') {
+    // Trust the first proxy only (Vercel's load balancer)
+    app.set('trust proxy', 1);
+} else {
+    app.set('trust proxy', 'loopback');
+}
 
 // Security middleware with CSP configuration for cross-origin script loading
 app.use(helmet({
@@ -39,32 +43,23 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(expressLayouts);
 
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 100, // limit each IP to 100 requests per windowMs
+    validate: {
+        // Disable trust proxy validation since we need it for Vercel deployment
+        trustProxy: false
+    }
 });
 app.use('/api/', limiter);
-
-// Helper to check if user is authenticated from token
-const isAuthenticated = (req) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) return false;
-
-    try {
-        const user = jwt.verify(token, process.env.JWT_SECRET);
-        return user;
-    } catch (err) {
-        return false;
-    }
-};
 
 // Set up view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set("layout", "layouts/application");
 
 // Serve static files from assets directory
 app.use(express.static(path.join(__dirname, 'assets')));
@@ -100,6 +95,8 @@ app.use((req, res, next) => {
             res.locals.user = user;
             res.locals.isAuthenticated = true;
             res.locals.token = token;
+            res.locals.title = req.query.title || '';
+            res.locals.page = req.path === '/' ? 'index' : '';
         } catch (err) {
             res.locals.user = null;
             res.locals.isAuthenticated = false;
@@ -109,6 +106,8 @@ app.use((req, res, next) => {
         res.locals.user = null;
         res.locals.isAuthenticated = false;
         res.locals.token = '';
+        res.locals.title = '';
+        res.locals.page = req.path === '/' ? 'index' : '';
     }
 
     next();
@@ -201,6 +200,19 @@ app.get('/dashboard', async (req, res) => {
 app.get('/auth/logout', (req, res) => {
     res.clearCookie('token');
     res.redirect('/auth/signin');
+});
+
+// Static pages routes
+app.get('/pages/:page', (req, res) => {
+    const page = req.params.page;
+    const validPages = ['about', 'contact', 'blog', 'privacy', 'terms', 'security'];
+    
+    if (validPages.includes(page)) {
+        res.locals.title = page.charAt(0).toUpperCase() + page.slice(1);
+        res.render(`pages/${page}`);
+    } else {
+        res.status(404).render('index');
+    }
 });
 
 // Error handling middleware
