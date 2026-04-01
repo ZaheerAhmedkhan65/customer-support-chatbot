@@ -13,6 +13,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy for correct protocol detection behind Vercel's load balancer
+app.set('trust proxy', true);
+
 // Security middleware with CSP configuration for cross-origin script loading
 app.use(helmet({
     crossOriginEmbedderPolicy: false,
@@ -210,5 +213,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
