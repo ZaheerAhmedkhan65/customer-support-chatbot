@@ -20,6 +20,17 @@ class GeminiService {
         }
     }
 
+    async generateContent(prompt) {
+        try {
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            return { text: response.text() };
+        } catch (error) {
+            console.error('Gemini API error:', error);
+            return { text: "I apologize, but I'm having trouble generating content right now. Please try again later." };
+        }
+    }
+
     buildContext(knowledgeBase) {
         let context = "You are a helpful customer support assistant. Use the following information to answer customer questions:\n\n";
 

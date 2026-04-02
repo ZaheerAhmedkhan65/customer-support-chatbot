@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/bootstrap.min.css" >
     <link rel="stylesheet" href="/animate.min.css"/>
     <link rel="shortcut icon" href="/icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <style>
         /* Loading Spinner */
         .spinner-border-sm {
@@ -83,6 +84,9 @@
     <% if(queryTabParams !== 'embed') {%>
         <script src="https://cs-chatbot-plum.vercel.app/chatbot.js" data-org-id="usr_1774979664297_hsc2vqsrv">
         </script>
+    <%}%>
+    <% if(path === '/auth/signin' || path === '/auth/signup') {%>
+        <script src="/passwordToggle.js"></script>
     <%}%>
 </body>
 </html>
