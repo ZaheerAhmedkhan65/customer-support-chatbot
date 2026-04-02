@@ -35,20 +35,19 @@
         apiUrl: apiUrl,
         orgId: orgId,
         position: 'right', // Will be updated from server
-        themeColor: '#3B82F6',
+        themeColor: '#212529',
         businessName: 'Customer Support',
         welcomeMessage: 'Hello! How can I help you today?'
     };
-
-    // Load chatbot configuration from server
+    // Load chatbot configuration from server (public endpoint for embedded widgets)
     async function loadConfig() {
         try {
-            const response = await fetch(`${config.apiUrl}/api/chatbot/settings?org_id=${config.orgId}`);
+            const response = await fetch(`${config.apiUrl}/api/chatbot/public-settings?org_id=${config.orgId}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.chatbot) {
                     config.position = data.chatbot.button_position || 'right';
-                    config.themeColor = data.chatbot.theme_color || '#3B82F6';
+                    config.themeColor = data.chatbot.theme_color || '#212529';
                     config.businessName = data.chatbot.business_name || 'Customer Support';
                     config.welcomeMessage = data.chatbot.welcome_message || 'Hello! How can I help you today?';
                 }

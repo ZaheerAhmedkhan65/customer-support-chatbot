@@ -101,15 +101,18 @@ app.use((req, res, next) => {
             res.locals.user = null;
             res.locals.isAuthenticated = false;
             res.locals.token = '';
+            res.locals.title = '';
+            res.locals.page = req.path === '/' ? 'index' : '';
         }
     } else {
         res.locals.user = null;
         res.locals.isAuthenticated = false;
         res.locals.token = '';
         res.locals.title = '';
+        res.locals.path = req.path;
         res.locals.page = req.path === '/' ? 'index' : '';
     }
-
+    res.locals.queryTabParams = req.query.tab || '';
     next();
 });
 
