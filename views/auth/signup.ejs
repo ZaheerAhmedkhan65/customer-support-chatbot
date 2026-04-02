@@ -22,8 +22,14 @@
                         </div>
                         <div class="mb-3 animate__animated animate__fadeInRight">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required
-                                   placeholder="At least 6 characters">
+                            <div class="position-relative">
+                                <input type="password" class="form-control" id="password" name="password" required
+                                    placeholder="Enter your password">
+                                <button type="button" class="btn border-0 outline-none position-absolute top-50 end-0 translate-middle-y"
+                                    id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="d-grid animate__animated animate__fadeInUp">
                             <button type="submit" class="btn btn-primary btn-lg">Sign Up</button>
