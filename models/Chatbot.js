@@ -14,6 +14,16 @@ class Chatbot {
         return rows[0];
     }
 
+    static async findByOrgId(orgId) {
+        const [rows] = await pool.execute(
+            `SELECT c.* FROM chatbots c 
+             INNER JOIN users u ON c.user_id = u.id 
+             WHERE u.org_id = ?`,
+            [orgId]
+        );
+        return rows[0];
+    }
+
     static async update(chatbotId, data) {
         // Get existing chatbot data first
         const existing = await Chatbot.findByUserId(chatbotId);

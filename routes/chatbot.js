@@ -21,7 +21,7 @@ const authenticateFromCookie = (req, res, next) => {
     }
 };
 
-// Get chatbot settings (API endpoint for backward compatibility)
+// Get chatbot settings (API endpoint for backward compatibility - requires auth)
 router.get('/settings', authenticateFromCookie, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
@@ -38,6 +38,58 @@ router.get('/settings', authenticateFromCookie, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Get chatbot settings for embedded widget (public endpoint - no auth required)
+router.get('/public-settings', async (req, res) => {
+    try {
+        const orgId = req.query.org_id;
+        
+        if (!orgId) {
+            return res.status(400).json({ 
+                chatbot: {
+                    business_name: 'Customer Support',
+                    theme_color: '#3B82F6',
+                    button_position: 'right',
+                    welcome_message: 'Hello! How can I help you today?'
+                }
+            });
+        }
+
+        let chatbot = await Chatbot.findByOrgId(orgId);
+
+        if (!chatbot) {
+            // Return default settings if no chatbot found
+            return res.json({
+                chatbot: {
+                    business_name: 'Customer Support',
+                    theme_color: '#3B82F6',
+                    button_position: 'right',
+                    welcome_message: 'Hello! How can I help you today?'
+                }
+            });
+        }
+
+        // Return only the public-facing settings
+        res.json({
+            chatbot: {
+                business_name: chatbot.business_name || 'Customer Support',
+                theme_color: chatbot.theme_color || '#3B82F6',
+                button_position: chatbot.button_position || 'right',
+                welcome_message: chatbot.welcome_message || 'Hello! How can I help you today?'
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            chatbot: {
+                business_name: 'Customer Support',
+                theme_color: '#3B82F6',
+                button_position: 'right',
+                welcome_message: 'Hello! How can I help you today?'
+            }
+        });
     }
 });
 
