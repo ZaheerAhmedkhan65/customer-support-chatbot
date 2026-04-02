@@ -348,4 +348,152 @@ router.get('/embed-script', authenticateFromCookie, async (req, res) => {
     }
 });
 
+// ============================================
+// Analytics API Endpoints
+// ============================================
+
+// Get analytics summary
+router.get('/analytics/summary', authenticateFromCookie, async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        const chatbot = await Chatbot.findByUserId(req.user.id);
+        
+        if (!chatbot) {
+            return res.json({
+                success: true,
+                summary: {
+                    totalConversations: 0,
+                    totalSessions: 0,
+                    todayConversations: 0,
+                    avgMessagesPerSession: 0
+                }
+            });
+        }
+
+        // Get total conversations
+        const [totalConv] = await pool.execute(
+            'SELECT COUNT(*) as count FROM conversations WHERE chatbot_id = ?',
+            [chatbot.id]
+        );
+
+        // Get unique sessions
+        const [sessions] = await pool.execute(
+            'SELECT COUNT(DISTINCT session_id) as count FROM conversations WHERE chatbot_id = ?',
+            [chatbot.id]
+        );
+
+        // Get today's conversations
+        const [todayConv] = await pool.execute(
+            `SELECT COUNT(*) as count FROM conversations 
+             WHERE chatbot_id = ? AND DATE(created_at) = CURDATE()`,
+            [chatbot.id]
+        );
+
+        // Get average messages per session
+        const [avgMsgs] = await pool.execute(
+            `SELECT COUNT(*) / COUNT(DISTINCT session_id) as avg FROM conversations WHERE chatbot_id = ?`,
+            [chatbot.id]
+        );
+
+        res.json({
+            success: true,
+            summary: {
+                totalConversations: totalConv[0].count || 0,
+                totalSessions: sessions[0].count || 0,
+                todayConversations: todayConv[0].count || 0,
+                avgMessagesPerSession: avgMsgs[0].avg ? Math.round(avgMsgs[0].avg) : 0
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch analytics summary' });
+    }
+});
+
+// Get chart data (last 7 days)
+router.get('/analytics/chart-data', authenticateFromCookie, async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        const chatbot = await Chatbot.findByUserId(req.user.id);
+        
+        if (!chatbot) {
+            return res.json({
+                success: true,
+                labels: [],
+                data: []
+            });
+        }
+
+        // Get conversations per day for last 7 days
+        const [rows] = await pool.execute(
+            `SELECT DATE(created_at) as date, COUNT(*) as count 
+             FROM conversations 
+             WHERE chatbot_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+             GROUP BY DATE(created_at)
+             ORDER BY date ASC`,
+            [chatbot.id]
+        );
+
+        // Format labels and data
+        const labels = [];
+        const data = [];
+        const today = new Date();
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            labels.push(date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+            
+            const found = rows.find(r => r.date === dateStr);
+            data.push(found ? found.count : 0);
+        }
+        console.log('Chart data labels:', labels);
+        console.log('Chart data values:', data);
+        res.json({ success: true, labels, data });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch chart data' });
+    }
+});
+
+// Get conversations with pagination
+router.get('/analytics/conversations', authenticateFromCookie, async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        const chatbot = await Chatbot.findByUserId(req.user.id);
+        let page = parseInt(req.query.page);
+        let limit = parseInt(req.query.limit);
+        
+        // Validate and set defaults
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 50;
+        if (limit > 100) limit = 100; // Cap at 100
+        
+        const offset = (page - 1) * limit;
+
+        if (!chatbot) {
+            return res.json({
+                success: true,
+                conversations: []
+            });
+        }
+
+        // Use query() instead of execute() for better parameter handling
+        const [conversations] = await pool.query(
+            `SELECT * FROM conversations 
+             WHERE chatbot_id = ? 
+             ORDER BY created_at DESC 
+             LIMIT ? OFFSET ?`,
+            [chatbot.id, limit, offset]
+        );
+
+        res.json({ success: true, conversations });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch conversations' });
+    }
+});
+
 module.exports = router;

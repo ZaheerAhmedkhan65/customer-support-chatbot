@@ -64,24 +64,8 @@ app.set("layout", "layouts/application");
 // Serve static files from assets directory
 app.use(express.static(path.join(__dirname, 'assets')));
 
-// Serve chatbot.js specifically from public directory
-app.get('/chatbot.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, 'public', 'chatbot.js'));
-});
-
-// Serve chatbot.css specifically from public directory
-app.get('/chatbot.css', (req, res) => {
-    res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, 'public', 'chatbot.css'));
-});
+// Note: chatbot.js and chatbot.css are now served by embed routes
+// with dynamic configuration based on pricing plan and usage
 
 // Middleware to make user available to all views
 app.use((req, res, next) => {
@@ -121,6 +105,7 @@ const authRoutes = require('./routes/auth');
 const chatbotRoutes = require('./routes/chatbot');
 const chatRoutes = require('./routes/chat');
 const embedRoutes = require('./routes/embed');
+const subscriptionRoutes = require('./routes/subscription');
 
 // Index route
 app.get('/', (req, res) => {
@@ -134,6 +119,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 app.use('/', embedRoutes);
 
 // Dashboard route (protected)

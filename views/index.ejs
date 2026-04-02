@@ -108,7 +108,10 @@
                         <li class="mb-2">✓ Email support</li>
                         <li class="mb-2">✓ Basic analytics</li>
                     </ul>
-                    <a href="/auth/signup" class="btn btn-outline-primary mt-auto mx-auto" style="width: 185px;">Get Started</a>
+                    <form action="/api/subscription/upgrade" method="POST">
+                        <input type="hidden" name="planId" value="starter">
+                        <button type="submit" class="btn btn-outline-primary mt-auto mx-auto" style="width: 185px;">Get Started</button>
+                    </form>
                 </div>
             </div>
             <div class="col-md-4 animate__animated animate__zoomIn" style="animation-delay: 0.2s;">
@@ -124,7 +127,10 @@
                         <li class="mb-2">✓ Custom branding</li>
                         <li class="mb-2">✓ API access</li>
                     </ul>
-                    <a href="/auth/signup" class="btn btn-primary mt-auto mx-auto" style="width: 185px;">Get Started</a>
+                    <form action="/api/subscription/upgrade" method="POST">
+                        <input type="hidden" name="planId" value="professional">
+                        <button type="submit" class="btn btn-primary mt-auto mx-auto" style="width: 185px;">Get Started</button>
+                    </form>
                 </div>
             </div>
             <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
@@ -139,7 +145,10 @@
                         <li class="mb-2">✓ SLA guarantee</li>
                         <li class="mb-2">✓ On-premise deployment</li>
                     </ul>
-                    <a href="#" class="btn btn-outline-primary mt-auto mx-auto" style="width: 185px;">Contact Sales</a>
+                    <form action="/api/subscription/upgrade" method="POST">
+                        <input type="hidden" name="planId" value="enterprise">
+                        <button type="submit" class="btn btn-outline-primary mt-auto mx-auto" style="width: 185px;">Contact Sales</button>
+                    </form>
                 </div>
             </div>
         </div>

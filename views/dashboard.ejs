@@ -30,6 +30,12 @@
                             Analytics
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= tab === 'billing' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
+                            href="/dashboard?tab=billing" style="border-radius: 0;">
+                            Billing & Usage
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -279,7 +285,7 @@
                                                                             data-question="<%= item.question %>"
                                                                             data-answer="<%= item.answer %>"
                                                                             data-keywords="<%= item.keywords || '' %>">
-                                                                            Edit
+                                                                            <i class="bi bi-pencil"></i>
                                                                         </button>
                                                                         <form method="POST"
                                                                             action="/api/chatbot/knowledge/<%= item.id %>?_method=DELETE"
@@ -287,7 +293,7 @@
                                                                             <button type="submit"
                                                                                 class="btn btn-sm btn-outline-danger"
                                                                                 onclick="return confirm('Are you sure you want to delete this item?')">
-                                                                                Delete
+                                                                                <i class="bi bi-trash"></i>
                                                                             </button>
                                                                         </form>
                                                                     </div>
@@ -341,76 +347,211 @@
                                                                 <h1 class="h2">Conversation Analytics</h1>
                                                             </div>
 
-                                                            <div
-                                                                class="card border-0  animate__animated animate__fadeInUp">
-                                                                <div class="card-body">
-                                                                    <% if (typeof conversations==='undefined' ||
-                                                                        conversations===null) { %>
-                                                                        <!-- Skeleton Loader for Analytics -->
-                                                                        <div class="skeleton-loader">
-                                                                            <div class="skeleton skeleton-title mb-4">
-                                                                            </div>
-                                                                            <div
-                                                                                class="skeleton skeleton-text medium mb-3">
-                                                                            </div>
-                                                                            <div class="skeleton skeleton-text mb-3">
-                                                                            </div>
-                                                                            <div
-                                                                                class="skeleton skeleton-text short mb-4">
-                                                                            </div>
-                                                                            <div class="skeleton skeleton-title mb-4">
-                                                                            </div>
-                                                                            <div
-                                                                                class="skeleton skeleton-text medium mb-3">
-                                                                            </div>
-                                                                            <div class="skeleton skeleton-text mb-3">
-                                                                            </div>
+                                                            <!-- Analytics Summary Cards -->
+                                                            <div class="row g-4 mb-4 animate__animated animate__fadeInUp">
+                                                                <div class="col-md-3">
+                                                                    <div class="card border-0 shadow-sm h-100">
+                                                                        <div class="card-body text-center">
+                                                                            <h3 class="h2 mb-0" id="totalConversations">0</h3>
+                                                                            <p class="text-muted mb-0">Total Conversations</p>
                                                                         </div>
-                                                                        <% } else if (conversations &&
-                                                                            conversations.length> 0) { %>
-                                                                            <div class="list-group">
-                                                                                <% conversations.forEach(conv=> { %>
-                                                                                    <div class="list-group-item">
-                                                                                        <div
-                                                                                            class="d-flex w-100 justify-content-between mb-2">
-                                                                                            <small class="text-muted">
-                                                                                                <strong>Session:</strong>
-                                                                                                <%= conv.session_id %>
-                                                                                            </small>
-                                                                                            <small class="text-muted">
-                                                                                                <%= new
-                                                                                                    Date(conv.created_at).toLocaleString()
-                                                                                                    %>
-                                                                                            </small>
-                                                                                        </div>
-                                                                                        <div class="mb-2">
-                                                                                            <span
-                                                                                                class="badge bg-primary">Customer:</span>
-                                                                                            <span class="ms-2">
-                                                                                                <%= conv.user_message %>
-                                                                                            </span>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <span
-                                                                                                class="badge bg-success">Bot:</span>
-                                                                                            <span class="ms-2">
-                                                                                                <%= conv.bot_response %>
-                                                                                            </span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <% }); %>
-                                                                            </div>
-                                                                            <% } else { %>
-                                                                                <p class="text-muted text-center">No
-                                                                                    conversations yet. Your chatbot will
-                                                                                    start collecting data once embedded.
-                                                                                </p>
-                                                                                <% } %>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <div class="card border-0 shadow-sm h-100">
+                                                                        <div class="card-body text-center">
+                                                                            <h3 class="h2 mb-0" id="totalSessions">0</h3>
+                                                                            <p class="text-muted mb-0">Unique Sessions</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <div class="card border-0 shadow-sm h-100">
+                                                                        <div class="card-body text-center">
+                                                                            <h3 class="h2 mb-0" id="todayConversations">0</h3>
+                                                                            <p class="text-muted mb-0">Today</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <div class="card border-0 shadow-sm h-100">
+                                                                        <div class="card-body text-center">
+                                                                            <h3 class="h2 mb-0" id="avgMessagesPerSession">0</h3>
+                                                                            <p class="text-muted mb-0">Avg Messages/Session</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Chart Card -->
+                                                            <div class="card border-0 shadow-sm mb-4 animate__animated animate__fadeInUp">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title mb-4">Conversation Trend (Last 7 Days)</h5>
+                                                                    <canvas id="conversationChart" height="100"></canvas>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Conversations List -->
+                                                            <div class="card border-0 shadow-sm animate__animated animate__fadeInUp">
+                                                                <div class="card-body">
+                                                                    <h5 class="card-title mb-4">Recent Conversations</h5>
+                                                                    
+                                                                    <div id="conversationsContainer">
+                                                                        <!-- Conversations will be loaded here -->
+                                                                    </div>
+                                                                    
+                                                                    <div id="loadingIndicator" class="text-center py-3" style="display: none;">
+                                                                        <div class="spinner-border text-primary" role="status">
+                                                                            <span class="visually-hidden">Loading...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div id="noMoreData" class="text-center py-3 text-muted" style="display: none;">
+                                                                        <p class="mb-0">No more conversations to load</p>
+                                                                    </div>
+                                                                    
+                                                                    <div id="noConversations" class="text-center py-5">
+                                                                        <i class="bi bi-chat-square-text display-4 text-muted"></i>
+                                                                        <p class="text-muted mt-3">No conversations yet. Your chatbot will start collecting data once embedded.</p>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <% } %>
 
-                                                                <!-- Knowledge Base Loading State -->
+                                                                 <!-- Billing & Usage Tab -->
+                                                                 <% if (tab==='billing' ) { %>
+                                                                     <div
+                                                                         class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 animate__animated animate__fadeInDown">
+                                                                         <h1 class="h2">Billing & Usage</h1>
+                                                                     </div>
+
+                                                                     <!-- Usage Overview Card -->
+                                                                     <div class="card border-0 mb-4 animate__animated animate__fadeInUp">
+                                                                         <div class="card-body">
+                                                                             <h5 class="card-title mb-4">Current Month Usage</h5>
+                                                                             <div class="row g-4">
+                                                                                 <div class="col-md-6">
+                                                                                     <div class="p-3 bg-light rounded">
+                                                                                         <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                                             <span class="text-muted">Conversations</span>
+                                                                                             <span class="badge bg-primary" id="conversationBadge">Loading...</span>
+                                                                                         </div>
+                                                                                         <div class="progress" style="height: 10px;">
+                                                                                             <div class="progress-bar bg-primary" id="conversationProgress" role="progressbar" style="width: 0%"></div>
+                                                                                         </div>
+                                                                                         <small class="text-muted" id="conversationDetails">0 / 1,000</small>
+                                                                                     </div>
+                                                                                 </div>
+                                                                                 <div class="col-md-6">
+                                                                                     <div class="p-3 bg-light rounded">
+                                                                                         <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                                             <span class="text-muted">Knowledge Base Items</span>
+                                                                                             <span class="badge bg-success" id="kbBadge">Loading...</span>
+                                                                                         </div>
+                                                                                         <div class="progress" style="height: 10px;">
+                                                                                             <div class="progress-bar bg-success" id="kbProgress" role="progressbar" style="width: 0%"></div>
+                                                                                         </div>
+                                                                                         <small class="text-muted" id="kbDetails">0 / 50</small>
+                                                                                     </div>
+                                                                                 </div>
+                                                                             </div>
+                                                                         </div>
+                                                                     </div>
+
+                                                                      <!-- Current Plan Card -->
+                                                                      <div class="card border-0 mb-4 animate__animated animate__fadeInUp">
+                                                                          <div class="card-body">
+                                                                              <h5 class="card-title mb-4">Current Plan</h5>
+                                                                              <div class="row align-items-center">
+                                                                                  <div class="col-md-8">
+                                                                                      <div class="d-flex align-items-center">
+                                                                                          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                                                                              <span class="h4 mb-0" id="planInitial">S</span>
+                                                                                          </div>
+                                                                                          <div>
+                                                                                              <h4 class="mb-1" id="currentPlanName">Starter</h4>
+                                                                                              <p class="text-muted mb-0" id="currentPlanPrice">Free</p>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                                                                      <span class="badge bg-success" id="planStatus">Active</span>
+                                                                                  </div>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+
+                                                                      <!-- Upgrade Options -->
+                                                                      <div class="card border-0 mb-4 animate__animated animate__fadeInUp">
+                                                                          <div class="card-body">
+                                                                              <h5 class="card-title mb-4">Upgrade Your Plan</h5>
+                                                                              <div class="row g-4">
+                                                                                  <div class="col-md-4">
+                                                                                      <div class="card h-100 shadow-sm border-0">
+                                                                                          <div class="card-body text-center">
+                                                                                              <h6 class="card-title">Starter</h6>
+                                                                                              <h2 class="my-3">Free</h2>
+                                                                                              <ul class="list-unstyled text-start small mb-3">
+                                                                                                  <li>✓ 1,000 conversations/mo</li>
+                                                                                                  <li>✓ Basic knowledge base</li>
+                                                                                                  <li>✓ Email support</li>
+                                                                                              </ul>
+                                                                                              <button class="btn btn-outline-secondary btn-sm w-100" disabled id="currentPlanBtn">Current</button>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  <div class="col-md-4">
+                                                                                      <div class="card h-100 shadow border-primary border-2">
+                                                                                          <div class="card-body text-center">
+                                                                                              <span class="badge bg-primary mb-2">Popular</span>
+                                                                                              <h6 class="card-title">Professional</h6>
+                                                                                              <h2 class="my-3">$7<span class="text-muted fs-6">/mo</span></h2>
+                                                                                              <ul class="list-unstyled text-start small mb-3">
+                                                                                                  <li>✓ 5,000 conversations/mo</li>
+                                                                                                  <li>✓ Advanced knowledge base</li>
+                                                                                                  <li>✓ Priority support</li>
+                                                                                                  <li>✓ Custom branding</li>
+                                                                                                  <li>✓ API access</li>
+                                                                                              </ul>
+                                                                                              <button class="btn btn-primary btn-sm w-100" id="upgradeProfessionalBtn">Upgrade</button>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  <div class="col-md-4">
+                                                                                      <div class="card h-100 shadow-sm border-0">
+                                                                                          <div class="card-body text-center">
+                                                                                              <h6 class="card-title">Enterprise</h6>
+                                                                                              <h2 class="my-3">Custom</h2>
+                                                                                              <ul class="list-unstyled text-start small mb-3">
+                                                                                                  <li>✓ Unlimited conversations</li>
+                                                                                                  <li>✓ Custom AI training</li>
+                                                                                                  <li>✓ 24/7 phone support</li>
+                                                                                                  <li>✓ Dedicated account manager</li>
+                                                                                              </ul>
+                                                                                              <button class="btn btn-outline-primary btn-sm w-100" id="contactSalesBtn">Contact Sales</button>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                  </div>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+
+                                                                      <!-- Cancel Subscription -->
+                                                                      <div class="card border-0 mb-4 animate__animated animate__fadeInUp">
+                                                                          <div class="card-body">
+                                                                              <h5 class="card-title mb-4 text-danger">Danger Zone</h5>
+                                                                              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                                                                  <div class="flex-grow-1">
+                                                                                      <strong>Cancel Subscription</strong>
+                                                                                      <p class="mb-0 small">If you cancel your subscription, you will be downgraded to the free Starter plan at the end of your current billing period. Your chatbot will continue to work with limited features.</p>
+                                                                                  </div>
+                                                                                  <button class="btn btn-outline-danger btn-sm ms-3" id="cancelBtn" style="white-space: nowrap;">Cancel Subscription</button>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+                                                                      <% } %>
+
+                                                                         <!-- Knowledge Base Loading State -->
                                                                 <% if (tab==='knowledge' ) { %>
                                                                     <div id="knowledgeLoading"
                                                                         class="card border-0  animate__animated animate__fadeInUp"

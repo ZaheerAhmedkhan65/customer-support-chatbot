@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Subscription = require('../models/Subscription');
 const router = express.Router();
 
 router.get('/signup', (req, res) => {
@@ -40,6 +41,15 @@ router.post('/signup', async (req, res) => {
         // Create user
         const user = await User.create(email, password);
         console.log('User created:', user);
+        
+        // Create default free subscription
+        try {
+            await Subscription.create(user.id, 'free');
+            console.log('Free subscription created for user:', user.id);
+        } catch (subError) {
+            console.error('Error creating subscription:', subError);
+        }
+        
         // Create token
         const token = jwt.sign(
             { id: user.id, org_id: user.org_id, email: user.email },
