@@ -1,9 +1,8 @@
 // routes/chatbot.js
-const express = require('express');
 const authenticate = require('../middleware/auth');
 const Chatbot = require('../models/Chatbot');
 const Conversation = require('../models/Conversation');
-const router = express.Router();
+const router = require('./base')();
 
 // Middleware to authenticate from cookie
 const authenticateFromCookie = (req, res, next) => {
@@ -11,7 +10,7 @@ const authenticateFromCookie = (req, res, next) => {
     if (!token) {
         return res.redirect('/auth/signin');
     }
-    
+
     try {
         const jwt = require('jsonwebtoken');
         const user = jwt.verify(token, process.env.JWT_SECRET);
@@ -46,9 +45,9 @@ router.get('/settings', authenticateFromCookie, async (req, res) => {
 router.get('/public-settings', async (req, res) => {
     try {
         const orgId = req.query.org_id;
-        
+
         if (!orgId) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 chatbot: {
                     business_name: 'Customer Support',
                     theme_color: '#3B82F6',
@@ -83,7 +82,7 @@ router.get('/public-settings', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ 
+        res.status(500).json({
             chatbot: {
                 business_name: 'Customer Support',
                 theme_color: '#3B82F6',
@@ -98,7 +97,7 @@ router.get('/public-settings', async (req, res) => {
 router.post('/settings', authenticateFromCookie, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             // Create default chatbot first
             await Chatbot.create(req.user.id, '', '');
@@ -106,7 +105,7 @@ router.post('/settings', authenticateFromCookie, async (req, res) => {
         }
 
         await Chatbot.update(chatbot.id, req.body);
-        
+
         // Redirect back to dashboard with success message
         res.cookie('success', 'Settings saved successfully!', { maxAge: 5000 });
         res.redirect('/dashboard');
@@ -121,7 +120,7 @@ router.post('/settings', authenticateFromCookie, async (req, res) => {
 router.post('/knowledge', authenticateFromCookie, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             // Create default chatbot first
             await Chatbot.create(req.user.id, '', '');
@@ -167,14 +166,14 @@ router.post('/knowledge/:id', authenticateFromCookie, async (req, res) => {
 router.post('/knowledge/bulk-import', authenticateFromCookie, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             await Chatbot.create(req.user.id, '', '');
             chatbot = await Chatbot.findByUserId(req.user.id);
         }
 
         const { entries } = req.body;
-        
+
         if (!entries || !Array.isArray(entries) || entries.length === 0) {
             res.cookie('error', 'No entries provided for bulk import', { maxAge: 5000 });
             return res.redirect('/dashboard?tab=knowledge');
@@ -197,7 +196,7 @@ router.post('/knowledge/bulk-import', authenticateFromCookie, async (req, res) =
 router.post('/knowledge/generate', authenticateFromCookie, async (req, res) => {
     try {
         const { prompt, type } = req.body;
-            console.log('Received AI generation request with prompt:', prompt, 'and type:', type);
+        console.log('Received AI generation request with prompt:', prompt, 'and type:', type);
         if (!prompt) {
             return res.status(400).json({ error: 'Prompt is required' });
         }
@@ -245,7 +244,7 @@ router.post('/knowledge/apply-template', authenticateFromCookie, async (req, res
     try {
         console.log('Applying knowledge template with data:', req.body);
         let chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             await Chatbot.create(req.user.id, '', '');
             chatbot = await Chatbot.findByUserId(req.user.id);
@@ -335,7 +334,7 @@ router.get('/embed-script', authenticateFromCookie, async (req, res) => {
         const chatbot = await Chatbot.findByUserId(req.user.id);
         const user = { org_id: req.user.org_id };
         const host = req.get('host');
-        
+
         // Use http for localhost, https for production
         const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
         const scriptUrl = `${protocol}://${host}/chatbot.js`;
@@ -357,7 +356,7 @@ router.get('/analytics/summary', authenticateFromCookie, async (req, res) => {
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             return res.json({
                 success: true,
@@ -415,7 +414,7 @@ router.get('/analytics/chart-data', authenticateFromCookie, async (req, res) => 
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
-        
+
         if (!chatbot) {
             return res.json({
                 success: true,
@@ -443,9 +442,9 @@ router.get('/analytics/chart-data', authenticateFromCookie, async (req, res) => 
             const date = new Date(today);
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
-            
+
             labels.push(date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-            
+
             const found = rows.find(r => r.date === dateStr);
             data.push(found ? found.count : 0);
         }
@@ -465,12 +464,12 @@ router.get('/analytics/conversations', authenticateFromCookie, async (req, res) 
         const chatbot = await Chatbot.findByUserId(req.user.id);
         let page = parseInt(req.query.page);
         let limit = parseInt(req.query.limit);
-        
+
         // Validate and set defaults
         if (isNaN(page) || page < 1) page = 1;
         if (isNaN(limit) || limit < 1) limit = 50;
         if (limit > 100) limit = 100; // Cap at 100
-        
+
         const offset = (page - 1) * limit;
 
         if (!chatbot) {

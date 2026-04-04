@@ -6,7 +6,7 @@ const PLANS = {
         id: 'free',
         name: 'Starter',
         price: 0,
-        currency: 'USD',
+        currency: '$',
         billingPeriod: 'monthly',
         limits: {
             conversationsPerMonth: 1000,
@@ -15,13 +15,19 @@ const PLANS = {
             apiAccess: false,
             analytics: 'basic',
             support: 'email'
-        }
+        },
+        features: [
+            '1,000 conversations / month',
+            'Basic knowledge base',
+            'Email support',
+            'Basic analytics'
+        ]
     },
     professional: {
         id: 'professional',
         name: 'Professional',
         price: 7,
-        currency: 'USD',
+        currency: '$',
         billingPeriod: 'monthly',
         limits: {
             conversationsPerMonth: 5000,
@@ -30,13 +36,21 @@ const PLANS = {
             apiAccess: true,
             analytics: 'advanced',
             support: 'priority'
-        }
+        },
+        features: [
+            '5,000 conversations / month',
+            'Advanced knowledge base',
+            'Priority support',
+            'Advanced analytics',
+            'Custom branding',
+            'API access'
+        ]
     },
     enterprise: {
         id: 'enterprise',
         name: 'Enterprise',
         price: null, // Custom pricing
-        currency: 'USD',
+        currency: '$',
         billingPeriod: 'monthly',
         limits: {
             conversationsPerMonth: -1, // Unlimited
@@ -45,7 +59,15 @@ const PLANS = {
             apiAccess: true,
             analytics: 'advanced',
             support: '24/7'
-        }
+        },
+        features: [
+            'Unlimited conversations',
+            'Custom AI training',
+            '24 / 7 phone support',
+            'Dedicated account manager',
+            'SLA guarantee',
+            'On - premise deployment'
+        ]
     }
 };
 

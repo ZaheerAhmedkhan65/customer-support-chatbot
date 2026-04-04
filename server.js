@@ -4,10 +4,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-require('dotenv').config();;
+require('dotenv').config();
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const expressLayouts = require("express-ejs-layouts");
+const { authenticate, optionalAuthenticate } = require('./middleware/auth');
 
 const app = express();
 
@@ -101,38 +102,18 @@ app.use((req, res, next) => {
 });
 
 // Routes
-const authRoutes = require('./routes/auth');
-const chatbotRoutes = require('./routes/chatbot');
-const chatRoutes = require('./routes/chat');
-const embedRoutes = require('./routes/embed');
-const subscriptionRoutes = require('./routes/subscription');
+const initializeRoutes = require('./routes/app');
+initializeRoutes(app);
 
 // Index route
 app.get('/', (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1] || req.query.token;
-    res.render('index', {
-        user: res.locals.user,
-        token: token || ''
-    });
+    res.render('index');
 });
 
-app.use('/auth', authRoutes);
-app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-app.use('/', embedRoutes);
-
 // Dashboard route (protected)
-app.get('/dashboard', async (req, res) => {
-    // Check for token in cookie, Authorization header, or query string
-    const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
-
-    if (!token) {
-        return res.redirect('/auth/signin');
-    }
-
+app.get('/dashboard', authenticate, async (req, res) => {
     try {
-        const user = jwt.verify(token, process.env.JWT_SECRET);
+        const user = req.user;
 
         // Get success/error messages from cookies
         const success = req.cookies.success || null;
@@ -171,7 +152,7 @@ app.get('/dashboard', async (req, res) => {
 
         res.render('dashboard', {
             user,
-            token,
+            token: req.cookies.token,
             success,
             error,
             tab,
@@ -181,12 +162,13 @@ app.get('/dashboard', async (req, res) => {
             conversations
         });
     } catch (err) {
+        console.error('Dashboard error:', err);
         return res.redirect('/auth/signin');
     }
 });
 
 // Logout route
-app.get('/auth/logout', (req, res) => {
+app.get('/logout', (req, res) => {
     res.clearCookie('token');
     res.redirect('/auth/signin');
 });

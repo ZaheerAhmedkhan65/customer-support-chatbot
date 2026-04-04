@@ -1,11 +1,10 @@
-const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const Subscription = require('../models/Subscription');
 const Usage = require('../models/Usage');
-const router = express.Router();
+const router = require('./base')();
 
 /**
  * GET /chatbot.js
@@ -16,9 +15,9 @@ const router = express.Router();
 router.get('/chatbot.js', async (req, res) => {
     try {
         // Check for org-id from query parameter or header
-        const orgId = req.query['org-id'] || 
-                      req.headers['x-org-id'] || 
-                      req.headers['data-org-id'];
+        const orgId = req.query['org-id'] ||
+            req.headers['x-org-id'] ||
+            req.headers['data-org-id'];
 
         // Read the base chatbot.js file
         const chatbotJsPath = path.join(__dirname, '../public/chatbot.js');
@@ -32,7 +31,7 @@ router.get('/chatbot.js', async (req, res) => {
             res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-            
+
             // Serve a version that fetches config dynamically
             const dynamicLoaderScript = `
 // Chatbot Dynamic Loader
@@ -176,7 +175,7 @@ router.get('/chatbot.css', (req, res) => {
 router.get('/chatbot/config', async (req, res) => {
     try {
         const orgId = req.query['org-id'] || req.headers['x-org-id'];
-        
+
         if (!orgId) {
             return res.status(400).json({ error: 'org-id is required' });
         }

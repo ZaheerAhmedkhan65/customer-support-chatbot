@@ -1,18 +1,38 @@
-const express = require('express');
-const router = express.Router();
-const userController = require('../controllers/userController');
+const router = require('./base')();
 
-router.get('/dashboard', (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1] || req.query.token;
-    if (!token) {
-        return res.redirect('/auth/signin');
-    }
-    
+// User profile route
+router.get('/profile', async (req, res) => {
     try {
-        const user = jwt.verify(token, process.env.JWT_SECRET);
-        res.render('dashboard', { user, token });
+        const user = req.user;
+        res.json({
+            id: user.id,
+            email: user.email,
+            org_id: user.org_id
+        });
     } catch (err) {
-        return res.redirect('/auth/signin');
+        console.error('Error fetching user profile:', err);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
+// Update user settings
+router.put('/settings', async (req, res) => {
+    try {
+        const user = req.user;
+        const { email, preferences } = req.body;
+        
+        // TODO: Implement user settings update
+        res.json({
+            message: 'Settings updated successfully',
+            user: {
+                id: user.id,
+                email: email || user.email,
+                org_id: user.org_id
+            }
+        });
+    } catch (err) {
+        console.error('Error updating user settings:', err);
+        res.status(500).json({ error: 'Failed to update settings' });
     }
 });
 

@@ -363,11 +363,12 @@ function loadTemplates() {
 // ============================================
 
 // Load data based on active tab
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
-    
+
     if (tab === 'billing') {
+        loadSubscriptionPlans();
         loadUsageData();
         attachBillingEventListeners();
     } else if (tab === 'analytics') {
@@ -388,10 +389,10 @@ let analyticsHasMore = true;
 function loadAnalyticsData() {
     // Load summary stats
     fetchAnalyticsSummary();
-    
+
     // Load chart data
     fetchChartData();
-    
+
     // Load initial conversations
     loadMoreConversations();
 }
@@ -430,7 +431,7 @@ function fetchChartData() {
 function renderChart(labels, data) {
     const ctx = document.getElementById('conversationChart');
     if (!ctx) return;
-    
+
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -471,28 +472,28 @@ function renderChart(labels, data) {
 // Load more conversations with infinite scroll
 function loadMoreConversations() {
     if (analyticsLoading || !analyticsHasMore) return;
-    
+
     analyticsLoading = true;
     document.getElementById('loadingIndicator').style.display = 'block';
-    
+
     fetch(`/api/chatbot/analytics/conversations?page=${analyticsPage}&limit=50`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('loadingIndicator').style.display = 'none';
             analyticsLoading = false;
-            
+
             if (data.success && data.conversations.length > 0) {
                 // Hide "no conversations" message
                 document.getElementById('noConversations').style.display = 'none';
-                
+
                 // Group conversations by session_id
                 const grouped = groupBySession(data.conversations);
-                
+
                 // Render grouped conversations
                 renderGroupedConversations(grouped);
-                
+
                 analyticsPage++;
-                
+
                 if (data.conversations.length < 50) {
                     analyticsHasMore = false;
                     document.getElementById('noMoreData').style.display = 'block';
@@ -533,14 +534,14 @@ function groupBySession(conversations) {
 // Render grouped conversations as accordions
 function renderGroupedConversations(grouped) {
     const container = document.getElementById('conversationsContainer');
-    
+
     Object.values(grouped).forEach((session, index) => {
         const messageCount = session.messages.length;
         const firstMessageTime = new Date(session.firstMessage).toLocaleString();
         // Get the first customer message to display in the accordion header
         const firstMessage = session.messages[0] ? session.messages[0].user_message : 'No message';
         const truncatedMessage = firstMessage.length > 80 ? firstMessage.substring(0, 80) + '...' : firstMessage;
-        
+
         const accordion = document.createElement('div');
         accordion.className = 'accordion-item mb-3 border shadow-sm';
         accordion.style.borderRadius = '8px';
@@ -594,7 +595,7 @@ function renderGroupedConversations(grouped) {
                 </div>
             </div>
         `;
-        
+
         // Add hover effect
         const button = accordion.querySelector('.accordion-button');
         button.addEventListener('mouseenter', () => {
@@ -603,7 +604,7 @@ function renderGroupedConversations(grouped) {
         button.addEventListener('mouseleave', () => {
             button.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
         });
-        
+
         // Rotate chevron when expanded
         const chevron = accordion.querySelector('.bi-chevron-down');
         const collapseEl = accordion.querySelector('.accordion-collapse');
@@ -613,7 +614,7 @@ function renderGroupedConversations(grouped) {
         collapseEl.addEventListener('hidden.bs.collapse', () => {
             chevron.style.transform = 'rotate(0deg)';
         });
-        
+
         container.appendChild(accordion);
     });
 }
@@ -628,12 +629,12 @@ function escapeHtml(text) {
 // Setup infinite scroll
 function setupInfiniteScroll() {
     const scrollContainer = window;
-    
+
     scrollContainer.addEventListener('scroll', () => {
         const scrollTop = scrollContainer.scrollY || scrollContainer.scrollTop;
         const windowHeight = scrollContainer.innerHeight || document.documentElement.clientHeight;
         const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-        
+
         if (scrollTop + windowHeight >= documentHeight - 200) {
             loadMoreConversations();
         }
@@ -642,24 +643,10 @@ function setupInfiniteScroll() {
 
 // Attach event listeners for billing buttons
 function attachBillingEventListeners() {
-    const upgradeProfessionalBtn = document.getElementById('upgradeProfessionalBtn');
-    const contactSalesBtn = document.getElementById('contactSalesBtn');
     const cancelBtn = document.getElementById('cancelBtn');
-    
-    if (upgradeProfessionalBtn) {
-        upgradeProfessionalBtn.addEventListener('click', function() {
-            upgradePlan('professional');
-        });
-    }
-    
-    if (contactSalesBtn) {
-        contactSalesBtn.addEventListener('click', function() {
-            contactSales();
-        });
-    }
-    
+
     if (cancelBtn) {
-        cancelBtn.addEventListener('click', function() {
+        cancelBtn.addEventListener('click', function () {
             cancelSubscription();
         });
     }
@@ -667,7 +654,7 @@ function attachBillingEventListeners() {
 
 // Load usage and subscription data
 function loadUsageData() {
-    fetch('/api/subscription/usage')
+    fetch('/subscription/usage')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.usage) {
@@ -687,16 +674,16 @@ function updateUsageDisplay(usage) {
     const convUsed = usage.usage.conversations;
     const convLimit = usage.limits.conversations;
     const convPercentage = usage.percentageUsed;
-    
+
     const convBadge = document.getElementById('conversationBadge');
     const convProgress = document.getElementById('conversationProgress');
     const convDetails = document.getElementById('conversationDetails');
-    
+
     if (convBadge && convProgress && convDetails) {
         const limitText = convLimit === -1 ? 'Unlimited' : convLimit.toLocaleString();
         convBadge.textContent = `${convUsed.toLocaleString()} / ${limitText}`;
         convProgress.style.width = convPercentage > 100 ? '100%' : convPercentage + '%';
-        
+
         if (convPercentage >= 90) {
             convProgress.classList.remove('bg-primary');
             convProgress.classList.add('bg-danger');
@@ -708,64 +695,39 @@ function updateUsageDisplay(usage) {
             convBadge.classList.remove('bg-primary');
             convBadge.classList.add('bg-warning');
         }
-        
+
         convDetails.textContent = `${convUsed.toLocaleString()} of ${limitText} conversations used`;
     }
-    
+
     // Update knowledge base usage
     const kbUsed = usage.usage.knowledgeBase;
     const kbLimit = usage.limits.knowledgeBase;
     const kbPercentage = kbLimit > 0 ? Math.round((kbUsed / kbLimit) * 100) : 0;
-    
+
     const kbBadge = document.getElementById('kbBadge');
     const kbProgress = document.getElementById('kbProgress');
     const kbDetails = document.getElementById('kbDetails');
-    
+
     if (kbBadge && kbProgress && kbDetails) {
         const kbLimitText = kbLimit === -1 ? 'Unlimited' : kbLimit.toLocaleString();
         kbBadge.textContent = `${kbUsed} / ${kbLimitText}`;
         kbProgress.style.width = kbPercentage > 100 ? '100%' : kbPercentage + '%';
         kbDetails.textContent = `${kbUsed} of ${kbLimitText} items`;
     }
-    
+
     // Update current plan display
     const planName = document.getElementById('currentPlanName');
     const planPrice = document.getElementById('currentPlanPrice');
     const planInitial = document.getElementById('planInitial');
-    
+
     if (planName && planPrice) {
         planName.textContent = usage.subscription.planName;
         planPrice.textContent = usage.subscription.price ? `$${usage.subscription.price}/month` : 'Free';
-        
+
         if (planInitial) {
             planInitial.textContent = usage.subscription.planName.charAt(0).toUpperCase();
         }
     }
-}
-
-// Upgrade plan function
-function upgradePlan(planId) {
-    if (!confirm(`Are you sure you want to upgrade to the ${planId === 'professional' ? 'Professional' : 'Enterprise'} plan?`)) {
-        return;
-    }
-    
-    fetch('/api/subscription/upgrade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            window.location.href = '/dashboard?tab=billing';
-        } else {
-            alert('Failed to upgrade plan: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        alert('Error: ' + err.message);
-    });
 }
 
 // Contact sales function
@@ -778,35 +740,35 @@ function cancelSubscription() {
     if (!confirm('Are you sure you want to cancel your subscription? You will be downgraded to the free Starter plan at the end of your current billing period.')) {
         return;
     }
-    
+
     // Second confirmation
     if (!confirm('This action cannot be undone. Your chatbot will have limited features (1,000 conversations/month). Do you still want to cancel?')) {
         return;
     }
-    
-    fetch('/api/subscription/cancel', {
+
+    fetch('/subscription/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            window.location.href = '/dashboard?tab=billing';
-        } else {
-            alert('Failed to cancel subscription: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        alert('Error: ' + err.message);
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '/dashboard?tab=billing';
+            } else {
+                alert('Failed to cancel subscription: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err.message);
+        });
 }
 
 // Update plan display based on current plan
 function updatePlanDisplay(planId) {
     const currentPlanBtn = document.getElementById('currentPlanBtn');
     const cancelBtn = document.getElementById('cancelBtn');
-    
+
     if (planId === 'free') {
         if (currentPlanBtn) {
             currentPlanBtn.textContent = 'Current';
@@ -823,7 +785,7 @@ function updatePlanDisplay(planId) {
             currentPlanBtn.disabled = false;
             currentPlanBtn.classList.remove('btn-outline-secondary');
             currentPlanBtn.classList.add('btn-outline-primary');
-            currentPlanBtn.onclick = function() { downgradePlan('free'); };
+            currentPlanBtn.onclick = function () { downgradePlan('free'); };
         }
         if (cancelBtn) {
             cancelBtn.style.display = 'inline-block';
@@ -834,7 +796,7 @@ function updatePlanDisplay(planId) {
             currentPlanBtn.disabled = false;
             currentPlanBtn.classList.remove('btn-outline-secondary');
             currentPlanBtn.classList.add('btn-outline-primary');
-            currentPlanBtn.onclick = function() { downgradePlan('professional'); };
+            currentPlanBtn.onclick = function () { downgradePlan('professional'); };
         }
         if (cancelBtn) {
             cancelBtn.style.display = 'inline-block';
@@ -847,28 +809,27 @@ function downgradePlan(planId) {
     if (!confirm(`Are you sure you want to downgrade to the ${planId === 'free' ? 'Starter (Free)' : planId === 'professional' ? 'Professional ($7/mo)' : 'Enterprise'} plan?`)) {
         return;
     }
-    
-    fetch('/api/subscription/downgrade', {
+
+    fetch('/subscription/downgrade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            window.location.href = '/dashboard?tab=billing';
-        } else {
-            alert('Failed to downgrade plan: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        alert('Error: ' + err.message);
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '/dashboard?tab=billing';
+            } else {
+                alert('Failed to downgrade plan: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err.message);
+        });
 }
 
 // Make functions globally available
-window.upgradePlan = upgradePlan;
 window.contactSales = contactSales;
 window.cancelSubscription = cancelSubscription;
 window.downgradePlan = downgradePlan;

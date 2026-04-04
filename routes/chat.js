@@ -1,10 +1,9 @@
-const express = require('express');
 const pool = require('../config/database');
 const Chatbot = require('../models/Chatbot');
 const Subscription = require('../models/Subscription');
 const Usage = require('../models/Usage');
 const geminiService = require('../services/geminiService');
-const router = express.Router();
+const router = require('./base')();
 
 router.post('/message', async (req, res) => {
     try {
@@ -26,7 +25,7 @@ router.post('/message', async (req, res) => {
         // Check if user has exceeded their conversation limit
         const hasExceededLimit = await Usage.hasExceededLimit(userId);
         if (hasExceededLimit) {
-            return res.status(429).json({ 
+            return res.status(429).json({
                 error: 'Monthly conversation limit exceeded',
                 message: 'You have reached your monthly conversation limit. Please upgrade your plan to continue using the chatbot.',
                 upgradeUrl: '/dashboard?tab=billing'
@@ -35,9 +34,9 @@ router.post('/message', async (req, res) => {
 
         // Record the conversation usage (this will also check limits)
         const usageResult = await Usage.recordConversation(userId, chatbot.id, session_id);
-        
+
         if (!usageResult.success) {
-            return res.status(429).json({ 
+            return res.status(429).json({
                 error: 'Monthly conversation limit exceeded',
                 message: 'You have reached your monthly conversation limit. Please upgrade your plan to continue using the chatbot.',
                 upgradeUrl: '/dashboard?tab=billing',
@@ -63,8 +62,8 @@ router.post('/message', async (req, res) => {
             [chatbot.id, session_id, message, response]
         );
 
-        res.json({ 
-            response, 
+        res.json({
+            response,
             business_name: chatbot.business_name,
             usage: {
                 remaining: usageResult.remaining,
