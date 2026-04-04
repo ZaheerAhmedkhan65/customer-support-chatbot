@@ -4,10 +4,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-require('dotenv').config();;
+require('dotenv').config();
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const expressLayouts = require("express-ejs-layouts");
+const { authenticate, optionalAuthenticate } = require('./middleware/auth');
 
 const app = express();
 
@@ -64,24 +65,8 @@ app.set("layout", "layouts/application");
 // Serve static files from assets directory
 app.use(express.static(path.join(__dirname, 'assets')));
 
-// Serve chatbot.js specifically from public directory
-app.get('/chatbot.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, 'public', 'chatbot.js'));
-});
-
-// Serve chatbot.css specifically from public directory
-app.get('/chatbot.css', (req, res) => {
-    res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendFile(path.join(__dirname, 'public', 'chatbot.css'));
-});
+// Note: chatbot.js and chatbot.css are now served by embed routes
+// with dynamic configuration based on pricing plan and usage
 
 // Middleware to make user available to all views
 app.use((req, res, next) => {
@@ -117,36 +102,18 @@ app.use((req, res, next) => {
 });
 
 // Routes
-const authRoutes = require('./routes/auth');
-const chatbotRoutes = require('./routes/chatbot');
-const chatRoutes = require('./routes/chat');
-const embedRoutes = require('./routes/embed');
+const initializeRoutes = require('./routes/app');
+initializeRoutes(app);
 
 // Index route
 app.get('/', (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1] || req.query.token;
-    res.render('index', {
-        user: res.locals.user,
-        token: token || ''
-    });
+    res.render('index');
 });
 
-app.use('/auth', authRoutes);
-app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/', embedRoutes);
-
 // Dashboard route (protected)
-app.get('/dashboard', async (req, res) => {
-    // Check for token in cookie, Authorization header, or query string
-    const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
-
-    if (!token) {
-        return res.redirect('/auth/signin');
-    }
-
+app.get('/dashboard', authenticate, async (req, res) => {
     try {
-        const user = jwt.verify(token, process.env.JWT_SECRET);
+        const user = req.user;
 
         // Get success/error messages from cookies
         const success = req.cookies.success || null;
@@ -185,7 +152,7 @@ app.get('/dashboard', async (req, res) => {
 
         res.render('dashboard', {
             user,
-            token,
+            token: req.cookies.token,
             success,
             error,
             tab,
@@ -195,12 +162,13 @@ app.get('/dashboard', async (req, res) => {
             conversations
         });
     } catch (err) {
+        console.error('Dashboard error:', err);
         return res.redirect('/auth/signin');
     }
 });
 
 // Logout route
-app.get('/auth/logout', (req, res) => {
+app.get('/logout', (req, res) => {
     res.clearCookie('token');
     res.redirect('/auth/signin');
 });

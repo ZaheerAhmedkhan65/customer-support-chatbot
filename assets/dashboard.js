@@ -357,3 +357,479 @@ function loadTemplates() {
             document.getElementById('templatesList').innerHTML = '<p class="text-danger text-center">Failed to load templates.</p>';
         });
 }
+
+// ============================================
+// Billing & Usage Tracking Functions
+// ============================================
+
+// Load data based on active tab
+document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+
+    if (tab === 'billing') {
+        loadSubscriptionPlans();
+        loadUsageData();
+        attachBillingEventListeners();
+    } else if (tab === 'analytics') {
+        loadAnalyticsData();
+        setupInfiniteScroll();
+    }
+});
+
+// ============================================
+// Analytics Functions
+// ============================================
+
+let analyticsPage = 1;
+let analyticsLoading = false;
+let analyticsHasMore = true;
+
+// Load analytics data
+function loadAnalyticsData() {
+    // Load summary stats
+    fetchAnalyticsSummary();
+
+    // Load chart data
+    fetchChartData();
+
+    // Load initial conversations
+    loadMoreConversations();
+}
+
+// Fetch analytics summary
+function fetchAnalyticsSummary() {
+    fetch('/api/chatbot/analytics/summary')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalConversations').textContent = data.summary.totalConversations || 0;
+                document.getElementById('totalSessions').textContent = data.summary.totalSessions || 0;
+                document.getElementById('todayConversations').textContent = data.summary.todayConversations || 0;
+                document.getElementById('avgMessagesPerSession').textContent = data.summary.avgMessagesPerSession || 0;
+            }
+        })
+        .catch(err => console.error('Failed to load analytics summary:', err));
+}
+
+// Fetch chart data
+function fetchChartData() {
+    fetch('/api/chatbot/analytics/chart-data')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Chart data received:', data);
+            if (data.success) {
+                renderChart(data.labels, data.data);
+            } else {
+                console.error('Chart data error:', data);
+            }
+        })
+        .catch(err => console.error('Failed to load chart data:', err));
+}
+
+// Render conversation chart
+function renderChart(labels, data) {
+    const ctx = document.getElementById('conversationChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Conversations',
+                data: data,
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#3B82F6',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load more conversations with infinite scroll
+function loadMoreConversations() {
+    if (analyticsLoading || !analyticsHasMore) return;
+
+    analyticsLoading = true;
+    document.getElementById('loadingIndicator').style.display = 'block';
+
+    fetch(`/api/chatbot/analytics/conversations?page=${analyticsPage}&limit=50`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            analyticsLoading = false;
+
+            if (data.success && data.conversations.length > 0) {
+                // Hide "no conversations" message
+                document.getElementById('noConversations').style.display = 'none';
+
+                // Group conversations by session_id
+                const grouped = groupBySession(data.conversations);
+
+                // Render grouped conversations
+                renderGroupedConversations(grouped);
+
+                analyticsPage++;
+
+                if (data.conversations.length < 50) {
+                    analyticsHasMore = false;
+                    document.getElementById('noMoreData').style.display = 'block';
+                }
+            } else if (analyticsPage === 1) {
+                // No conversations at all
+                document.getElementById('noConversations').style.display = 'block';
+                analyticsHasMore = false;
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load conversations:', err);
+            analyticsLoading = false;
+            document.getElementById('loadingIndicator').style.display = 'none';
+        });
+}
+
+// Group conversations by session_id
+function groupBySession(conversations) {
+    const groups = {};
+    conversations.forEach(conv => {
+        if (!groups[conv.session_id]) {
+            groups[conv.session_id] = {
+                session_id: conv.session_id,
+                messages: [],
+                firstMessage: conv.created_at
+            };
+        }
+        groups[conv.session_id].messages.push({
+            user_message: conv.user_message,
+            bot_response: conv.bot_response,
+            created_at: conv.created_at
+        });
+    });
+    return groups;
+}
+
+// Render grouped conversations as accordions
+function renderGroupedConversations(grouped) {
+    const container = document.getElementById('conversationsContainer');
+
+    Object.values(grouped).forEach((session, index) => {
+        const messageCount = session.messages.length;
+        const firstMessageTime = new Date(session.firstMessage).toLocaleString();
+        // Get the first customer message to display in the accordion header
+        const firstMessage = session.messages[0] ? session.messages[0].user_message : 'No message';
+        const truncatedMessage = firstMessage.length > 80 ? firstMessage.substring(0, 80) + '...' : firstMessage;
+
+        const accordion = document.createElement('div');
+        accordion.className = 'accordion-item mb-3 border shadow-sm';
+        accordion.style.borderRadius = '8px';
+        accordion.style.overflow = 'hidden';
+        accordion.innerHTML = `
+            <h2 class="accordion-header" id="session-${session.session_id}" style="margin: 0;">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${session.session_id}" aria-expanded="false" aria-controls="collapse-${session.session_id}" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); transition: all 0.3s ease;">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="d-flex align-items-center" style="flex: 1; min-width: 0;">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <i class="bi bi-chat-square-text text-white" style="font-size: 0.9rem;"></i>
+                            </div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div class="text-truncate mb-1" style="font-weight: 600; color: #2c3e50;">
+                                    "${escapeHtml(truncatedMessage)}"
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary me-2" style="font-size: 0.7rem;">${messageCount} msg${messageCount > 1 ? 's' : ''}</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">${firstMessageTime}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-2 flex-shrink-0">
+                            <i class="bi bi-chevron-down text-muted" style="transition: transform 0.3s ease; font-size: 0.8rem;"></i>
+                        </div>
+                    </div>
+                </button>
+            </h2>
+            <div id="collapse-${session.session_id}" class="accordion-collapse collapse" aria-labelledby="session-${session.session_id}" data-bs-parent="#conversationsContainer">
+                <div class="accordion-body" style="background: #fafbfc; padding: 1.25rem;">
+                    <div class="conversation-messages">
+                        ${session.messages.map((msg, msgIndex) => `
+                            <div class="mb-3" style="padding: 0.75rem; background: white; border-radius: 8px; border-left: 4px solid ${msgIndex === 0 ? '#3B82F6' : '#10B981'}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div class="d-flex align-items-start mb-2">
+                                    <span class="badge ${msgIndex === 0 ? 'bg-primary' : 'bg-secondary'} me-2 mt-1" style="font-size: 0.7rem;">${msgIndex === 0 ? 'Customer' : 'Customer'}</span>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1" style="line-height: 1.5;">${escapeHtml(msg.user_message)}</p>
+                                        <small class="text-muted" style="font-size: 0.7rem;">${new Date(msg.created_at).toLocaleString()}</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-start mt-2" style="padding-left: 1rem; border-left: 2px solid #e5e7eb; margin-left: 0.5rem;">
+                                    <span class="badge bg-success me-2 mt-1" style="font-size: 0.7rem;">Bot</span>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1" style="line-height: 1.5; color: #374151;">${escapeHtml(msg.bot_response)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            ${msgIndex < session.messages.length - 1 ? '' : ''}
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add hover effect
+        const button = accordion.querySelector('.accordion-button');
+        button.addEventListener('mouseenter', () => {
+            button.style.background = 'linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)';
+        });
+        button.addEventListener('mouseleave', () => {
+            button.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+        });
+
+        // Rotate chevron when expanded
+        const chevron = accordion.querySelector('.bi-chevron-down');
+        const collapseEl = accordion.querySelector('.accordion-collapse');
+        collapseEl.addEventListener('shown.bs.collapse', () => {
+            chevron.style.transform = 'rotate(180deg)';
+        });
+        collapseEl.addEventListener('hidden.bs.collapse', () => {
+            chevron.style.transform = 'rotate(0deg)';
+        });
+
+        container.appendChild(accordion);
+    });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Setup infinite scroll
+function setupInfiniteScroll() {
+    const scrollContainer = window;
+
+    scrollContainer.addEventListener('scroll', () => {
+        const scrollTop = scrollContainer.scrollY || scrollContainer.scrollTop;
+        const windowHeight = scrollContainer.innerHeight || document.documentElement.clientHeight;
+        const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+
+        if (scrollTop + windowHeight >= documentHeight - 200) {
+            loadMoreConversations();
+        }
+    });
+}
+
+// Attach event listeners for billing buttons
+function attachBillingEventListeners() {
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+            cancelSubscription();
+        });
+    }
+}
+
+// Load usage and subscription data
+function loadUsageData() {
+    fetch('/subscription/usage')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.usage) {
+                updateUsageDisplay(data.usage);
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load usage data:', err);
+            document.getElementById('conversationBadge').textContent = 'Error';
+            document.getElementById('kbBadge').textContent = 'Error';
+        });
+}
+
+// Update the usage display with data
+function updateUsageDisplay(usage) {
+    // Update conversation usage
+    const convUsed = usage.usage.conversations;
+    const convLimit = usage.limits.conversations;
+    const convPercentage = usage.percentageUsed;
+
+    const convBadge = document.getElementById('conversationBadge');
+    const convProgress = document.getElementById('conversationProgress');
+    const convDetails = document.getElementById('conversationDetails');
+
+    if (convBadge && convProgress && convDetails) {
+        const limitText = convLimit === -1 ? 'Unlimited' : convLimit.toLocaleString();
+        convBadge.textContent = `${convUsed.toLocaleString()} / ${limitText}`;
+        convProgress.style.width = convPercentage > 100 ? '100%' : convPercentage + '%';
+
+        if (convPercentage >= 90) {
+            convProgress.classList.remove('bg-primary');
+            convProgress.classList.add('bg-danger');
+            convBadge.classList.remove('bg-primary');
+            convBadge.classList.add('bg-danger');
+        } else if (convPercentage >= 70) {
+            convProgress.classList.remove('bg-primary');
+            convProgress.classList.add('bg-warning');
+            convBadge.classList.remove('bg-primary');
+            convBadge.classList.add('bg-warning');
+        }
+
+        convDetails.textContent = `${convUsed.toLocaleString()} of ${limitText} conversations used`;
+    }
+
+    // Update knowledge base usage
+    const kbUsed = usage.usage.knowledgeBase;
+    const kbLimit = usage.limits.knowledgeBase;
+    const kbPercentage = kbLimit > 0 ? Math.round((kbUsed / kbLimit) * 100) : 0;
+
+    const kbBadge = document.getElementById('kbBadge');
+    const kbProgress = document.getElementById('kbProgress');
+    const kbDetails = document.getElementById('kbDetails');
+
+    if (kbBadge && kbProgress && kbDetails) {
+        const kbLimitText = kbLimit === -1 ? 'Unlimited' : kbLimit.toLocaleString();
+        kbBadge.textContent = `${kbUsed} / ${kbLimitText}`;
+        kbProgress.style.width = kbPercentage > 100 ? '100%' : kbPercentage + '%';
+        kbDetails.textContent = `${kbUsed} of ${kbLimitText} items`;
+    }
+
+    // Update current plan display
+    const planName = document.getElementById('currentPlanName');
+    const planPrice = document.getElementById('currentPlanPrice');
+    const planInitial = document.getElementById('planInitial');
+
+    if (planName && planPrice) {
+        planName.textContent = usage.subscription.planName;
+        planPrice.textContent = usage.subscription.price ? `$${usage.subscription.price}/month` : 'Free';
+
+        if (planInitial) {
+            planInitial.textContent = usage.subscription.planName.charAt(0).toUpperCase();
+        }
+    }
+}
+
+// Contact sales function
+function contactSales() {
+    window.location.href = '/pages/contact';
+}
+
+// Cancel subscription function
+function cancelSubscription() {
+    if (!confirm('Are you sure you want to cancel your subscription? You will be downgraded to the free Starter plan at the end of your current billing period.')) {
+        return;
+    }
+
+    // Second confirmation
+    if (!confirm('This action cannot be undone. Your chatbot will have limited features (1,000 conversations/month). Do you still want to cancel?')) {
+        return;
+    }
+
+    fetch('/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '/dashboard?tab=billing';
+            } else {
+                alert('Failed to cancel subscription: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err.message);
+        });
+}
+
+// Update plan display based on current plan
+function updatePlanDisplay(planId) {
+    const currentPlanBtn = document.getElementById('currentPlanBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    if (planId === 'free') {
+        if (currentPlanBtn) {
+            currentPlanBtn.textContent = 'Current';
+            currentPlanBtn.disabled = true;
+            currentPlanBtn.classList.remove('btn-primary', 'btn-outline-primary');
+            currentPlanBtn.classList.add('btn-outline-secondary');
+        }
+        if (cancelBtn) {
+            cancelBtn.style.display = 'none';
+        }
+    } else if (planId === 'professional') {
+        if (currentPlanBtn) {
+            currentPlanBtn.textContent = 'Downgrade';
+            currentPlanBtn.disabled = false;
+            currentPlanBtn.classList.remove('btn-outline-secondary');
+            currentPlanBtn.classList.add('btn-outline-primary');
+            currentPlanBtn.onclick = function () { downgradePlan('free'); };
+        }
+        if (cancelBtn) {
+            cancelBtn.style.display = 'inline-block';
+        }
+    } else if (planId === 'enterprise') {
+        if (currentPlanBtn) {
+            currentPlanBtn.textContent = 'Downgrade';
+            currentPlanBtn.disabled = false;
+            currentPlanBtn.classList.remove('btn-outline-secondary');
+            currentPlanBtn.classList.add('btn-outline-primary');
+            currentPlanBtn.onclick = function () { downgradePlan('professional'); };
+        }
+        if (cancelBtn) {
+            cancelBtn.style.display = 'inline-block';
+        }
+    }
+}
+
+// Downgrade plan function
+function downgradePlan(planId) {
+    if (!confirm(`Are you sure you want to downgrade to the ${planId === 'free' ? 'Starter (Free)' : planId === 'professional' ? 'Professional ($7/mo)' : 'Enterprise'} plan?`)) {
+        return;
+    }
+
+    fetch('/subscription/downgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '/dashboard?tab=billing';
+            } else {
+                alert('Failed to downgrade plan: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err.message);
+        });
+}
+
+// Make functions globally available
+window.contactSales = contactSales;
+window.cancelSubscription = cancelSubscription;
+window.downgradePlan = downgradePlan;
