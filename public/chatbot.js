@@ -37,6 +37,8 @@
         position: 'right', // Will be updated from server
         themeColor: '#212529',
         businessName: 'Customer Support',
+        subtitle: 'Customer Support',
+        displaySubtitle: false,
         welcomeMessage: 'Hello! How can I help you today?'
     };
     // Load chatbot configuration from server (public endpoint for embedded widgets)
@@ -49,9 +51,12 @@
                     config.position = data.chatbot.button_position || 'right';
                     config.themeColor = data.chatbot.theme_color || '#212529';
                     config.businessName = data.chatbot.business_name || 'Customer Support';
+                    config.subtitle = data.chatbot.subtitle || 'Customer Support';
+                    config.displaySubtitle = data.chatbot.display_subtitle || false;
                     config.welcomeMessage = data.chatbot.welcome_message || 'Hello! How can I help you today?';
                 }
             }
+            console.log('Chatbot config loaded:', config);
         } catch (error) {
             console.error('Failed to load chatbot config:', error);
         }
@@ -273,7 +278,7 @@
             <div class="chatbot-dialog hidden" id="chatbot-dialog">
                 <div class="chatbot-header">
                     <h3>${config.businessName}</h3>
-                    <p>Customer Support</p>
+                    ${config.displaySubtitle ? `<p>${config.subtitle}</p>` : ''}
                 </div>
                 <div class="chatbot-messages" id="chatbot-messages">
                     <div class="message bot">

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const passport = require('passport');
 const Subscription = require('../models/Subscription');
 const router = require('./base')();
 
@@ -115,5 +116,18 @@ router.get('/logout', (req, res) => {
     res.clearCookie('token');
     res.redirect('/auth/signin');
 });
+
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google/callback',
+    passport.authenticate('google', {
+        failureRedirect: '/auth/signin',
+        failureFlash: true
+    }),
+    (req, res) => {
+        // Successful authentication, redirect to dashboard.
+        res.redirect('/dashboard');
+    }
+);
 
 module.exports = router;
