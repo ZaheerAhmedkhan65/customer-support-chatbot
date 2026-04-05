@@ -6,8 +6,12 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const path = require('path');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const expressLayouts = require("express-ejs-layouts");
+const pool = require('./config/database'); // MySQL connection pool
 const { authenticate, optionalAuthenticate } = require('./middleware/auth');
 
 const app = express();
@@ -20,6 +24,8 @@ if (process.env.NODE_ENV === 'production') {
 } else {
     app.set('trust proxy', 'loopback');
 }
+
+require('./config/passport');
 
 // Security middleware with CSP configuration for cross-origin script loading
 app.use(helmet({
@@ -46,6 +52,36 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(expressLayouts);
 
+const sessionStore = new MySQLStore({
+    expiration: 86400000, // 1 day in milliseconds
+    createDatabaseTable: true, // Will create sessions table if it doesn't exist
+    schema: {
+        tableName: 'sessions',
+        columnNames: {
+            session_id: 'session_id',
+            expires: 'expires',
+            data: 'data'
+        }
+    }
+}, pool);
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -68,36 +104,55 @@ app.use(express.static(path.join(__dirname, 'assets')));
 // Note: chatbot.js and chatbot.css are now served by embed routes
 // with dynamic configuration based on pricing plan and usage
 
-// Middleware to make user available to all views
+// Middleware to make user available to all views (supports both JWT and Session)
 app.use((req, res, next) => {
-    // Check for token in cookie, Authorization header, or query string
-    const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
+    let user = null;
+    let token = null;
+    let isAuthenticated = false;
 
-    if (token) {
+    // First, try to authenticate via JWT token
+    const jwtToken = req.cookies?.token || req.headers['authorization']?.split(' ')[1] || req.query.token;
+
+    if (jwtToken) {
         try {
-            const user = jwt.verify(token, process.env.JWT_SECRET);
+            user = jwt.verify(jwtToken, process.env.JWT_SECRET);
+            token = jwtToken;
+            isAuthenticated = true;
             req.user = user;
-            res.locals.user = user;
-            res.locals.isAuthenticated = true;
-            res.locals.token = token;
-            res.locals.title = req.query.title || '';
-            res.locals.page = req.path === '/' ? 'index' : '';
         } catch (err) {
-            res.locals.user = null;
-            res.locals.isAuthenticated = false;
-            res.locals.token = '';
-            res.locals.title = '';
-            res.locals.page = req.path === '/' ? 'index' : '';
+            // JWT token invalid, continue to check session
+            console.log('JWT verification failed in view middleware:', err.message);
         }
-    } else {
-        res.locals.user = null;
-        res.locals.isAuthenticated = false;
-        res.locals.token = '';
-        res.locals.title = '';
-        res.locals.page = req.path === '/' ? 'index' : '';
     }
+
+    // If no valid JWT, check for session authentication (Google OAuth)
+    if (!isAuthenticated && req.isAuthenticated && req.isAuthenticated()) {
+        user = req.user;
+        isAuthenticated = true;
+        // For session auth, we might also want to set a JWT token for API calls
+        // This helps with AJAX requests that need authentication
+        if (!token && user) {
+            try {
+                token = jwt.sign(
+                    { id: user.id, org_id: user.org_id, email: user.email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1h' }
+                );
+            } catch (signErr) {
+                console.log('Failed to create JWT from session:', signErr.message);
+            }
+        }
+    }
+
+    // Set view locals
+    res.locals.user = user;
+    res.locals.isAuthenticated = isAuthenticated;
+    res.locals.token = token || '';
+    res.locals.title = req.query.title || '';
+    res.locals.page = req.path === '/' ? 'index' : '';
     res.locals.path = req.path;
     res.locals.queryTabParams = req.query.tab || '';
+
     next();
 });
 
@@ -167,9 +222,29 @@ app.get('/dashboard', authenticate, async (req, res) => {
     }
 });
 
-// Logout route
+// Logout route (handles both JWT and Session logout)
 app.get('/logout', (req, res) => {
+    // Clear JWT cookie
     res.clearCookie('token');
+    
+    // Destroy session if exists (for Google OAuth users)
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Session destruction error:', err);
+            }
+        });
+    }
+    
+    // Logout from passport if logged in
+    if (req.logout) {
+        req.logout((err) => {
+            if (err) {
+                console.error('Passport logout error:', err);
+            }
+        });
+    }
+    
     res.redirect('/auth/signin');
 });
 

@@ -15,10 +15,10 @@ class Chatbot {
         const uniqueWords = [...new Set(words)].slice(0, 10);
         return uniqueWords.join(', ');
     }
-    static async create(userId, businessName, businessEmail) {
+    static async create(userId, businessName, subtitle, displaySubtitle, businessEmail) {
         const [result] = await pool.execute(
-            'INSERT INTO chatbots (user_id, business_name, business_email) VALUES (?, ?, ?)',
-            [userId, businessName, businessEmail]
+            'INSERT INTO chatbots (user_id, business_name, subtitle, display_subtitle, business_email) VALUES (?, ?, ?, ?, ?)',
+            [userId, businessName, subtitle, displaySubtitle, businessEmail]
         );
         return result.insertId;
     }
@@ -44,6 +44,8 @@ class Chatbot {
         
         const business_name = data.business_name || (existing ? existing.business_name : '');
         const business_email = data.business_email || (existing ? existing.business_email : '');
+        const subtitle = data.subtitle || (existing ? existing.subtitle : '');
+        const display_subtitle = data.display_subtitle || (existing ? existing.display_subtitle : false);
         const business_logo = data.business_logo || (existing ? existing.business_logo : '');
         const theme_color = data.theme_color || (existing ? existing.theme_color : '#3B82F6');
         const button_position = data.button_position || (existing ? existing.button_position : 'right');
@@ -51,8 +53,8 @@ class Chatbot {
         const is_active = data.is_active !== undefined ? data.is_active : (existing ? existing.is_active : 1);
         
         const [result] = await pool.execute(
-            'UPDATE chatbots SET business_name = ?, business_email = ?, business_logo = ?, theme_color = ?, button_position = ?, welcome_message = ?, is_active = ? WHERE id = ?',
-            [business_name, business_email, business_logo, theme_color, button_position, welcome_message, is_active, chatbotId]
+            'UPDATE chatbots SET business_name = ?, subtitle = ?, display_subtitle = ?, business_email = ?, business_logo = ?, theme_color = ?, button_position = ?, welcome_message = ?, is_active = ? WHERE id = ?',
+            [business_name, subtitle, display_subtitle, business_email, business_logo, theme_color, button_position, welcome_message, is_active, chatbotId]
         );
         return result;
     }

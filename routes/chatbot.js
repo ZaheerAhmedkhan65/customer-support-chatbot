@@ -4,25 +4,8 @@ const Chatbot = require('../models/Chatbot');
 const Conversation = require('../models/Conversation');
 const router = require('./base')();
 
-// Middleware to authenticate from cookie
-const authenticateFromCookie = (req, res, next) => {
-    const token = req.cookies?.token;
-    if (!token) {
-        return res.redirect('/auth/signin');
-    }
-
-    try {
-        const jwt = require('jsonwebtoken');
-        const user = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = user;
-        next();
-    } catch (err) {
-        return res.redirect('/auth/signin');
-    }
-};
-
 // Get chatbot settings (API endpoint for backward compatibility - requires auth)
-router.get('/settings', authenticateFromCookie, async (req, res) => {
+router.get('/settings', authenticate, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
 
@@ -50,6 +33,8 @@ router.get('/public-settings', async (req, res) => {
             return res.status(400).json({
                 chatbot: {
                     business_name: 'Customer Support',
+                    subtitle: 'Customer Support',
+                    display_subtitle: false,
                     theme_color: '#3B82F6',
                     button_position: 'right',
                     welcome_message: 'Hello! How can I help you today?'
@@ -64,6 +49,8 @@ router.get('/public-settings', async (req, res) => {
             return res.json({
                 chatbot: {
                     business_name: 'Customer Support',
+                    subtitle: 'Customer Support',
+                    display_subtitle: false,
                     theme_color: '#3B82F6',
                     button_position: 'right',
                     welcome_message: 'Hello! How can I help you today?'
@@ -75,6 +62,8 @@ router.get('/public-settings', async (req, res) => {
         res.json({
             chatbot: {
                 business_name: chatbot.business_name || 'Customer Support',
+                subtitle: chatbot.subtitle || 'Customer Support',
+                display_subtitle: chatbot.subtitle || false,
                 theme_color: chatbot.theme_color || '#3B82F6',
                 button_position: chatbot.button_position || 'right',
                 welcome_message: chatbot.welcome_message || 'Hello! How can I help you today?'
@@ -85,6 +74,8 @@ router.get('/public-settings', async (req, res) => {
         res.status(500).json({
             chatbot: {
                 business_name: 'Customer Support',
+                subtitle: 'Customer Support',
+                display_subtitle: false,
                 theme_color: '#3B82F6',
                 button_position: 'right',
                 welcome_message: 'Hello! How can I help you today?'
@@ -94,7 +85,7 @@ router.get('/public-settings', async (req, res) => {
 });
 
 // Update chatbot settings via POST (for form submission)
-router.post('/settings', authenticateFromCookie, async (req, res) => {
+router.post('/settings', authenticate, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
 
@@ -117,7 +108,7 @@ router.post('/settings', authenticateFromCookie, async (req, res) => {
 });
 
 // Add knowledge via POST (for form submission)
-router.post('/knowledge', authenticateFromCookie, async (req, res) => {
+router.post('/knowledge', authenticate, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
 
@@ -141,7 +132,7 @@ router.post('/knowledge', authenticateFromCookie, async (req, res) => {
 });
 
 // Update knowledge via POST with _method=PUT
-router.post('/knowledge/:id', authenticateFromCookie, async (req, res) => {
+router.post('/knowledge/:id', authenticate, async (req, res) => {
     try {
         if (req.query._method === 'PUT' || (req.body && req.body._method === 'PUT')) {
             const { content_type, question, answer, keywords } = req.body;
@@ -163,7 +154,7 @@ router.post('/knowledge/:id', authenticateFromCookie, async (req, res) => {
 });
 
 // Bulk import knowledge from JSON
-router.post('/knowledge/bulk-import', authenticateFromCookie, async (req, res) => {
+router.post('/knowledge/bulk-import', authenticate, async (req, res) => {
     try {
         let chatbot = await Chatbot.findByUserId(req.user.id);
 
@@ -193,7 +184,7 @@ router.post('/knowledge/bulk-import', authenticateFromCookie, async (req, res) =
 });
 
 // AI-powered content generation
-router.post('/knowledge/generate', authenticateFromCookie, async (req, res) => {
+router.post('/knowledge/generate', authenticate, async (req, res) => {
     try {
         const { prompt, type } = req.body;
         console.log('Received AI generation request with prompt:', prompt, 'and type:', type);
@@ -229,7 +220,7 @@ router.post('/knowledge/generate', authenticateFromCookie, async (req, res) => {
 });
 
 // Get knowledge templates
-router.get('/knowledge/templates', authenticateFromCookie, async (req, res) => {
+router.get('/knowledge/templates', authenticate, async (req, res) => {
     try {
         const templates = getKnowledgeTemplates();
         res.json({ templates });
@@ -240,7 +231,7 @@ router.get('/knowledge/templates', authenticateFromCookie, async (req, res) => {
 });
 
 // Apply knowledge template
-router.post('/knowledge/apply-template', authenticateFromCookie, async (req, res) => {
+router.post('/knowledge/apply-template', authenticate, async (req, res) => {
     try {
         console.log('Applying knowledge template with data:', req.body);
         let chatbot = await Chatbot.findByUserId(req.user.id);
@@ -329,9 +320,8 @@ function getKnowledgeTemplates() {
 }
 
 // Get embed script
-router.get('/embed-script', authenticateFromCookie, async (req, res) => {
+router.get('/embed-script', authenticate, async (req, res) => {
     try {
-        const chatbot = await Chatbot.findByUserId(req.user.id);
         const user = { org_id: req.user.org_id };
         const host = req.get('host');
 
@@ -352,7 +342,7 @@ router.get('/embed-script', authenticateFromCookie, async (req, res) => {
 // ============================================
 
 // Get analytics summary
-router.get('/analytics/summary', authenticateFromCookie, async (req, res) => {
+router.get('/analytics/summary', authenticate, async (req, res) => {
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
@@ -410,7 +400,7 @@ router.get('/analytics/summary', authenticateFromCookie, async (req, res) => {
 });
 
 // Get chart data (last 7 days)
-router.get('/analytics/chart-data', authenticateFromCookie, async (req, res) => {
+router.get('/analytics/chart-data', authenticate, async (req, res) => {
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
@@ -458,7 +448,7 @@ router.get('/analytics/chart-data', authenticateFromCookie, async (req, res) => 
 });
 
 // Get conversations with pagination
-router.get('/analytics/conversations', authenticateFromCookie, async (req, res) => {
+router.get('/analytics/conversations', authenticate, async (req, res) => {
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
