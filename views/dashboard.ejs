@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" data-page="dashboard">
     <div class="row">
         <!-- Sidebar -->
         <nav id="sidebar"
@@ -7,31 +7,31 @@
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link <%= !tab || tab === 'settings' ? 'active bg-primary text-white rounded rounded' : 'text-dark' %>"
+                        <a data-link class="nav-link <%= !tab || tab === 'settings' ? 'active bg-primary text-white rounded rounded' : 'text-dark' %>"
                             href="/dashboard" style="border-radius: 0;">
                             Chatbot Settings
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <%= tab === 'knowledge' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
+                        <a data-link class="nav-link <%= tab === 'knowledge' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
                             href="/dashboard?tab=knowledge" style="border-radius: 0;">
                             Knowledge Base
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <%= tab === 'embed' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
+                        <a data-link class="nav-link <%= tab === 'embed' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
                             href="/dashboard?tab=embed" style="border-radius: 0;">
                             Embed Script
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <%= tab === 'analytics' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
+                        <a data-link class="nav-link <%= tab === 'analytics' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
                             href="/dashboard?tab=analytics" style="border-radius: 0;">
                             Analytics
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <%= tab === 'billing' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
+                        <a data-link class="nav-link <%= tab === 'billing' ? 'active bg-primary text-white rounded' : 'text-dark' %>"
                             href="/dashboard?tab=billing" style="border-radius: 0;">
                             Billing & Usage
                         </a>
@@ -742,4 +742,3 @@
             <% } %>
     </div>
 </div>
-<script src="/dashboard.js"></script>

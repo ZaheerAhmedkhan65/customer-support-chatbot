@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" data-page="signin">
     <div class="row justify-content-center align-items-center min-vh-100">
         <div class="col-md-6 col-lg-4">
             <div class="card shadow animate__animated animate__fadeInUp">
@@ -9,7 +9,7 @@
                     </div>
 
                     <div class="d-grid">
-                        <a href="/auth/google"
+                        <a data-link href="/auth/google"
                             class="btn btn-outline-dark bg-white text-dark fw-semibold py-2 px-4 rounded-3 shadow-sm d-flex align-items-center justify-content-center">
                             <img src="/google.svg" alt="google" class="me-2" style="width:20px; height:20px;">
                             Continue with Google
@@ -28,7 +28,7 @@
                     </div>
                     <% } %>
 
-                    <form id="signinForm" method="POST" action="/auth/signin">
+                    <form data-link method="POST" action="/auth/signin">
                         <div class="mb-3 animate__animated animate__fadeInLeft">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required
@@ -39,7 +39,9 @@
                             <div class="position-relative">
                                 <input type="password" class="form-control" id="password" name="password"
                                     required placeholder="Enter your password">
-                                <button type="button"
+                                <button type="button" 
+                                    data-toggle-password 
+                                    data-target="#password"
                                     class="btn border-0 outline-none position-absolute top-50 end-0 translate-middle-y"
                                     id="togglePassword">
                                     <i class="bi bi-eye"></i>
@@ -51,7 +53,7 @@
                         </div>
                     </form>
                     <div class="text-center mt-4 animate__animated animate__fadeIn">
-                        <p class="mb-0 text-muted">Don't have an account? <a href="/auth/signup"
+                        <p class="mb-0 text-muted">Don't have an account? <a data-link href="/auth/signup"
                                 class="text-decoration-none">Sign Up</a></p>
                     </div>
                 </div>

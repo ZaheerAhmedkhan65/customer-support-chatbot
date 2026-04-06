@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" data-page="signup">
     <div class="row justify-content-center align-items-center min-vh-100">
         <div class="col-md-6 col-lg-4">
             <div class="card shadow animate__animated animate__fadeInUp">
@@ -28,7 +28,7 @@
                         </div>
                     <% } %>
                     
-                    <form id="signupForm" method="POST" action="/auth/signup">
+                    <form data-link method="POST" action="/auth/signup">
                         <div class="mb-3 animate__animated animate__fadeInLeft">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required 
@@ -51,7 +51,7 @@
                     </form>
                     
                     <div class="text-center mt-4 animate__animated animate__fadeIn">
-                        <p class="mb-0 text-muted">Already have an account? <a href="/auth/signin" class="text-decoration-none">Sign In</a></p>
+                        <p class="mb-0 text-muted">Already have an account? <a data-link href="/auth/signin" class="text-decoration-none">Sign In</a></p>
                     </div>
                 </div>
             </div>

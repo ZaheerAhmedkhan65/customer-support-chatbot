@@ -1,94 +1,28 @@
-//assets/dashboard.js
-const addToKnowledgeBaseBtn = document.getElementById('addToKnowledgeBaseBtn');
-if (addToKnowledgeBaseBtn) {
-    addToKnowledgeBaseBtn.addEventListener('click', addGeneratedContent);
-}
+// assets/dashboard.js
+// This file contains dashboard functionality that works with SPA navigation
+// Event listeners are attached via the SPA page initialization in assets/js/pages/dashboard.js
 
-const extractKeywordBtn = document.getElementById('extractKeywordBtn');
-if (extractKeywordBtn) {
-    extractKeywordBtn.addEventListener('click', extractKeywords);
-}
-
-const generateAnswerBtn = document.getElementById('generateAnswerBtn');
-if (generateAnswerBtn) {
-    generateAnswerBtn.addEventListener('click', generateAnswer);
-}
-
-const generateFaqBtn = document.getElementById('generateFaqBtn');
-if (generateFaqBtn) {
-    generateFaqBtn.addEventListener('click', generateFAQs);
-}
-// Copy embed code functionality
-const copyBtn = document.getElementById('copyBtn');
-if (copyBtn) {
-    copyBtn.addEventListener('click', copyEmbedCode);
-}
 // Dashboard JavaScript - Knowledge Base Management
 
 function copyEmbedCode() {
-    const code = document.getElementById('embedCode').textContent;
+    const code = document.getElementById('embedCode')?.textContent;
+    if (!code) return;
     navigator.clipboard.writeText(code);
-    copyBtn.textContent = 'Copied!';
-    copyBtn.classList.remove('btn-outline-light');
-    copyBtn.classList.add('btn-success');
-    setTimeout(() => {
-        copyBtn.textContent = 'Copy';
-        copyBtn.classList.remove('btn-success');
-        copyBtn.classList.add('btn-outline-light');
-    }, 1200);
+    const copyBtn = document.getElementById('copyBtn');
+    if (copyBtn) {
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.remove('btn-outline-light');
+        copyBtn.classList.add('btn-success');
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-light');
+        }, 1200);
+    }
 }
 
-// Auto-generate keywords from answer text
-document.getElementById('autoGenerateKeywords')?.addEventListener('click', function () {
-    const answer = document.getElementById('answer').value;
-    if (!answer.trim()) {
-        alert('Please enter an answer first to generate keywords.');
-        return;
-    }
-
-    const stopWords = ['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 'in', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'out', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'because', 'been', 'being', 'do', 'does', 'did', 'doing', 'would', 'should', 'could', 'will', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'it', 'its', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'are', 'was', 'were', 'be', 'have', 'has', 'had', 'having'];
-
-    const words = answer.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 2 && !stopWords.includes(word));
-
-    const uniqueWords = [...new Set(words)].slice(0, 10);
-    document.getElementById('keywords').value = uniqueWords.join(', ');
-});
-
-// Open edit modal with item data using event delegation
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.edit-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            const contentType = this.getAttribute('data-type');
-            const question = this.getAttribute('data-question');
-            const answer = this.getAttribute('data-answer');
-            const keywords = this.getAttribute('data-keywords');
-
-            document.getElementById('editId').value = id;
-            document.getElementById('edit_content_type').value = contentType;
-            document.getElementById('edit_question').value = question;
-            document.getElementById('edit_answer').value = answer;
-            document.getElementById('edit_keywords').value = keywords;
-
-            // Update form action
-            document.getElementById('editForm').action = '/api/chatbot/knowledge/' + id + '?_method=PUT';
-
-            // Show modal
-            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-            editModal.show();
-        });
-    });
-});
-
-// Event listeners for action buttons
-document.getElementById('importJsonBtn')?.addEventListener('click', importJSON);
-document.getElementById('generateFaqBtn')?.addEventListener('click', generateFAQs);
-document.getElementById('generateAnswerBtn')?.addEventListener('click', generateAnswer);
-document.getElementById('extractKeywordBtn')?.addEventListener('click', extractKeywords);
-document.getElementById('addToKnowledgeBaseBtn')?.addEventListener('click', addGeneratedContent);
+// Note: Event listeners are now attached via SPA page initialization
+// The functions below are called from assets/js/pages/dashboard.js
 
 // Import JSON data
 function importJSON() {
@@ -297,10 +231,7 @@ function addGeneratedContent() {
     }
 }
 
-// Load templates when modal opens
-document.getElementById('templatesModal')?.addEventListener('show.bs.modal', function () {
-    loadTemplates();
-});
+// Note: Template modal event is attached via SPA page initialization
 
 function loadTemplates() {
     fetch('/api/chatbot/knowledge/templates')
@@ -362,20 +293,8 @@ function loadTemplates() {
 // Billing & Usage Tracking Functions
 // ============================================
 
-// Load data based on active tab
-document.addEventListener('DOMContentLoaded', function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-
-    if (tab === 'billing') {
-        loadSubscriptionPlans();
-        loadUsageData();
-        attachBillingEventListeners();
-    } else if (tab === 'analytics') {
-        loadAnalyticsData();
-        setupInfiniteScroll();
-    }
-});
+// Note: Tab-based initialization is now handled via SPA page initialization
+// in assets/js/pages/dashboard.js
 
 // ============================================
 // Analytics Functions

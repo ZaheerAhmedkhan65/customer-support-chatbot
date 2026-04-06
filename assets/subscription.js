@@ -76,32 +76,41 @@ function displaySubscriptionPlans(plans) {
     });
 }
 
+// Handle initial page load
 document.addEventListener('DOMContentLoaded', function () {
+    handleSubscriptionNavigation();
+});
+
+// Handle SPA navigation
+document.addEventListener('spa:pageinit', function () {
+    handleSubscriptionNavigation();
+});
+
+// Handle subscription-related navigation
+function handleSubscriptionNavigation() {
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
     const path = window.location.pathname;
 
     if (tab === 'billing' || path === '/') {
         loadSubscriptionPlans();
-        attachBillingEventListeners();
     }
-});
-
-// Attach event listeners for billing buttons
-function attachBillingEventListeners() {
-    document.getElementById('subscriptionPlans')?.addEventListener('click', function (e) {
-        const btn = e.target.closest('.upgrade-plan-btn');
-        if (!btn) return;
-
-        const planId = btn.getAttribute('data-plan');
-
-        if (!planId) {
-            alert('No plan selected. Please try again.');
-            return;
-        }
-
-        upgradePlan(planId);
-    });
 }
+
+// Use event delegation on document level for upgrade buttons
+// This ensures it works even after SPA navigation
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.upgrade-plan-btn');
+    if (!btn) return;
+
+    const planId = btn.getAttribute('data-plan');
+
+    if (!planId) {
+        alert('No plan selected. Please try again.');
+        return;
+    }
+
+    upgradePlan(planId);
+});
 
 window.upgradePlan = upgradePlan;

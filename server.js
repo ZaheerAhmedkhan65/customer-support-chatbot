@@ -1,3 +1,4 @@
+//server.js
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -50,7 +51,22 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 app.use(expressLayouts);
+
+// Configure dynamic layout support after express-ejs-layouts
+// This middleware runs for every request and sets the layout based on AJAX
+app.use((req, res, next) => {
+    const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
+    
+    // For SPA navigation, we don't want the layout for AJAX requests
+    // Setting this after expressLayouts ensures it takes effect
+    if (isAjax) {
+        res.locals.layout = false;
+    }
+    
+    next();
+});
 
 const sessionStore = new MySQLStore({
     expiration: 86400000, // 1 day in milliseconds
@@ -162,7 +178,8 @@ initializeRoutes(app);
 
 // Index route
 app.get('/', (req, res) => {
-    res.render('index');
+    const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
+    res.render('index', { layout: isAjax ? false : 'layouts/application' });
 });
 
 // Dashboard route (protected)
@@ -205,6 +222,7 @@ app.get('/dashboard', authenticate, async (req, res) => {
             console.error('Error fetching conversations:', err);
         }
 
+        const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
         res.render('dashboard', {
             user,
             token: req.cookies.token,
@@ -214,7 +232,8 @@ app.get('/dashboard', authenticate, async (req, res) => {
             chatbot,
             knowledge,
             embedCode,
-            conversations
+            conversations,
+            layout: isAjax ? false : 'layouts/application'
         });
     } catch (err) {
         console.error('Dashboard error:', err);
@@ -252,12 +271,13 @@ app.get('/logout', (req, res) => {
 app.get('/pages/:page', (req, res) => {
     const page = req.params.page;
     const validPages = ['about', 'contact', 'blog', 'privacy', 'terms', 'security'];
+    const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
     
     if (validPages.includes(page)) {
         res.locals.title = page.charAt(0).toUpperCase() + page.slice(1);
-        res.render(`pages/${page}`);
+        res.render(`pages/${page}`, { layout: isAjax ? false : 'layouts/application' });
     } else {
-        res.status(404).render('index');
+        res.status(404).render('index', { layout: false });
     }
 });
 

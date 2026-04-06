@@ -1,3 +1,4 @@
+<!--layouts/application.ejs-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -52,10 +53,14 @@
             <p class="mt-3 text-muted">Loading...</p>
         </div>
     </div>
+        <%- include('../partials/_header') %>
+
+    <div id="content">
+        <%- body %>
+    </div>
     
-    <%- include('../partials/_header') %>
-    <%- body %>
-    <%- include('../partials/_footer') %>
+        <%- include('../partials/_footer') %>
+
     <script src="/bootstrap.bundle.min.js"></script>
     <script>
         // Hide page loader when page is fully loaded
@@ -87,8 +92,27 @@
         </script>
     <%}%>
     <% if(path === '/auth/signin' || path === '/auth/signup') {%>
-        <script src="/passwordToggle.js"></script>
+        <script src="/js/components/passwordToggle.js"></script>
     <%}%>
     <script src="/subscription.js"></script>
+    <script src="/dashboard.js"></script>
+
+    <script src="/js/core/spa.js"></script>
+    
+    <script src="/js/core/navigation.js"></script>
+    
+    <script src="/js/core/cache.js"></script>
+    
+    <script src="/js/core/eventDelegation.js"></script>
+    
+    <script src="/js/pages/home.js"></script>
+    
+    <script src="/js/pages/dashboard.js"></script>
+    
+    <script src="/js/pages/signin.js"></script>
+    
+    <script src="/js/pages/signup.js"></script>
+        
+    <script src="/js/app.js"></script>
 </body>
 </html>
