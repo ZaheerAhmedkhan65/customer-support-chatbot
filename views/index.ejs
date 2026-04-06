@@ -1,119 +1,127 @@
-<!-- Hero Section -->
-<section class="py-5" style="padding: 8rem 0 4rem;">
-    <div class="container">
-        <div class="row justify-content-between">
-            <div class="col-lg-6 animate__animated animate__fadeInDown">
-                <h1 class="display-4 fw-bold mb-4">AI Customer Support Built for Modern Websites</h1>
-                <p class="lead fs-4 mb-4" style="opacity: 0.95;">Never miss a customer inquiry again. Our AI chatbot
-                    provides instant, accurate responses to your customers anytime, anywhere.</p>
+<div data-page="home">
+    <!-- Hero Section -->
+    <section class="py-5" style="padding: 8rem 0 4rem;">
+        <div class="container">
+            <div class="row justify-content-between">
+                <div class="col-lg-6 animate__animated animate__fadeInDown">
+                    <h1 class="display-4 fw-bold mb-4">AI Customer Support Built for Modern Websites</h1>
+                    <p class="lead fs-4 mb-4" style="opacity: 0.95;">Never miss a customer inquiry again. Our AI chatbot
+                        provides instant, accurate responses to your customers anytime, anywhere.</p>
+                    <div
+                        class="d-flex justify-content-start gap-3 flex-wrap animate__animated animate__fadeInUp animate__delay-1s">
+                        <% if(user) {%>
+                            <a data-link href="/dashboard" class="btn btn-primary btn-lg px-4">Go to Dashboard</a>
+                            <%}else{%>
+                                <a data-link href="/auth/signup" class="btn btn-primary btn-lg px-4">Start Free
+                                    Trial</a>
+                                <%}%>
+                                    <a data-link href="/#demo" class="btn btn-outline-primary btn-lg px-4">Watch
+                                        Demo</a>
+                    </div>
+                </div>
                 <div
-                    class="d-flex justify-content-start gap-3 flex-wrap animate__animated animate__fadeInUp animate__delay-1s">
+                    class="col-lg-6 d-flex align-items-center justify-content-center gy-5 animate__animated animate__fadeInDown">
+                    <img src="/uploads/demo.png" alt="Chatbot Preview"
+                        class="img-fluid animate__animated animate__bounceIn" height="250">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Why Businesses Choose
+                Support<span class="text-muted">Bot</span>?</h2>
+            <div class="row g-4">
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Plug & Play</h3>
+                        <p class="card-text">Add the chatbot to your site with a single script tag. No coding required.
+                            Works instantly on any website.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Admin Controlled</h3>
+                        <p class="card-text">You control exactly what the AI knows and answers. Add FAQs, policies,
+                            product
+                            details, and more.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Always Online</h3>
+                        <p class="card-text">Your customers get 24/7 support even when you're sleeping. Never lose a
+                            sale
+                            due to unanswered questions.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Analytics Dashboard</h3>
+                        <p class="card-text">Track conversations, customer satisfaction, and common questions. Make
+                            data-driven decisions.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Customizable</h3>
+                        <p class="card-text">Match the chatbot to your brand with custom colors, position, and welcome
+                            messages.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+                    <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
+                        <h3 class="h4 card-title">Secure & Private</h3>
+                        <p class="card-text">Your data is encrypted and secure. GDPR compliant with full control over
+                            your
+                            information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">See It In Action</h2>
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6 animate__animated animate__fadeInLeft">
+                    <h3>Live Preview</h3>
+                    <p class="lead">Click the chat button on the right to see how our AI assistant responds to customer
+                        questions instantly.</p>
+                    <ul class="list-unstyled fs-5">
+                        <li class="mb-2">- Instant responses</li>
+                        <li class="mb-2">- 24/7 availability</li>
+                        <li class="mb-2">- Natural conversations</li>
+                        <li class="mb-2">- Smart knowledge base</li>
+                    </ul>
                     <% if(user) {%>
-                        <a href="/dashboard" class="btn btn-primary btn-lg px-4">Go to Dashboard</a>
+                        <a data-link href="/dashboard?tab=embed" class="btn btn-primary btn-lg px-4">Get embed code</a>
                         <%}else{%>
-                            <a href="/auth/signup" class="btn btn-primary btn-lg px-4">Start Free Trial</a>
+                            <a data-link href="/auth/signup"
+                                class="btn btn-primary btn-lg mt-3 animate__animated animate__pulse animate__infinite">Start
+                                Your Free Trial →</a>
                             <%}%>
-                                <a href="#demo" class="btn btn-outline-primary btn-lg px-4">Watch Demo</a>
+                </div>
+                <div class="col-lg-6 text-center animate__animated animate__fadeInRight">
+                    <img src="/uploads/preview.png" alt="Chatbot Preview"
+                        class="img-fluid animate__animated animate__bounceIn">
                 </div>
             </div>
-            <div
-                class="col-lg-6 d-flex align-items-center justify-content-center gy-5 animate__animated animate__fadeInDown">
-                <img src="/uploads/demo.png" alt="Chatbot Preview" class="img-fluid animate__animated animate__bounceIn"
-                    height="250">
-            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Features Section -->
-<section id="features" class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Why Businesses Choose Support<span
-                class="text-muted">Bot</span>?</h2>
-        <div class="row g-4">
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Plug & Play</h3>
-                    <p class="card-text">Add the chatbot to your site with a single script tag. No coding required.
-                        Works instantly on any website.</p>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Admin Controlled</h3>
-                    <p class="card-text">You control exactly what the AI knows and answers. Add FAQs, policies, product
-                        details, and more.</p>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Always Online</h3>
-                    <p class="card-text">Your customers get 24/7 support even when you're sleeping. Never lose a sale
-                        due to unanswered questions.</p>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Analytics Dashboard</h3>
-                    <p class="card-text">Track conversations, customer satisfaction, and common questions. Make
-                        data-driven decisions.</p>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Customizable</h3>
-                    <p class="card-text">Match the chatbot to your brand with custom colors, position, and welcome
-                        messages.</p>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
-                <div class="card h-100 shadow-sm border-0 text-center p-4 hover-lift">
-                    <h3 class="h4 card-title">Secure & Private</h3>
-                    <p class="card-text">Your data is encrypted and secure. GDPR compliant with full control over your
-                        information.</p>
-                </div>
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Simple, Transparent Pricing
+            </h2>
+            <div class="row g-4 justify-content-center" id="subscriptionPlans">
+                <!--Show pricing cards-->
             </div>
         </div>
-    </div>
-</section>
-
-<!-- Demo Section -->
-<section id="demo" class="py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">See It In Action</h2>
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6 animate__animated animate__fadeInLeft">
-                <h3>Live Preview</h3>
-                <p class="lead">Click the chat button on the right to see how our AI assistant responds to customer
-                    questions instantly.</p>
-                <ul class="list-unstyled fs-5">
-                    <li class="mb-2">- Instant responses</li>
-                    <li class="mb-2">- 24/7 availability</li>
-                    <li class="mb-2">- Natural conversations</li>
-                    <li class="mb-2">- Smart knowledge base</li>
-                </ul>
-                <% if(user) {%>
-                    <a href="/dashboard?tab=embed" class="btn btn-primary btn-lg px-4">Get embed code</a>
-                    <%}else{%>
-                        <a href="/auth/signup"
-                            class="btn btn-primary btn-lg mt-3 animate__animated animate__pulse animate__infinite">Start
-                            Your Free Trial →</a>
-                        <%}%>
-            </div>
-            <div class="col-lg-6 text-center animate__animated animate__fadeInRight">
-                <img src="/uploads/preview.png" alt="Chatbot Preview"
-                    class="img-fluid animate__animated animate__bounceIn">
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Pricing Section -->
-<section id="pricing" class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5 display-5 animate__animated animate__fadeInDown">Simple, Transparent Pricing</h2>
-        <div class="row g-4 justify-content-center" id="subscriptionPlans">
-            <!--Show pricing cards-->
-        </div>
-    </div>
-</section>
+    </section>
+</div>

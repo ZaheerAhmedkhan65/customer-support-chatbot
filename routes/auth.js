@@ -7,13 +7,21 @@ const router = require('./base')();
 router.get('/signup', (req, res) => {
     const error = req.cookies.error || null;
     res.clearCookie('error');
-    res.render('auth/signup', { error });
+    const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
+    res.render('auth/signup', { 
+        error,
+        layout: isAjax ? false : 'layouts/application'
+    });
 });
 
 router.get('/signin', (req, res) => {
     const error = req.cookies.error || null;
     res.clearCookie('error');
-    res.render('auth/signin', { error });
+    const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
+    res.render('auth/signin', { 
+        error,
+        layout: isAjax ? false : 'layouts/application'
+    });
 });
 
 router.post('/signup', async (req, res) => {
