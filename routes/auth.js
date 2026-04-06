@@ -90,7 +90,10 @@ router.post('/signin', async (req, res) => {
             res.cookie('error', 'Invalid credentials', { maxAge: 5000 });
             return res.redirect('/auth/signin');
         }
-
+        if(!user.password) {
+            res.cookie('error', 'Please sign in with Google', { maxAge: 5000 });
+            return res.redirect('/auth/signin');
+        }
         const isValid = await User.verifyPassword(password, user.password);
         if (!isValid) {
             res.cookie('error', 'Invalid credentials', { maxAge: 5000 });
@@ -121,8 +124,13 @@ router.post('/signin', async (req, res) => {
 
 // Logout route
 router.get('/logout', (req, res) => {
-    res.clearCookie('token');
-    res.redirect('/auth/signin');
+    req.session.destroy(err => {
+        if (err) return next(err);
+
+        res.clearCookie('token');
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
 });
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

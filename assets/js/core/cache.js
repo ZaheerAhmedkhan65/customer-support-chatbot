@@ -4,11 +4,9 @@ document.addEventListener(
 
         const link =
             e.target.closest("[data-link]");
-
         if (!link) return;
 
         const url = link.href;
-
         if (SPA.cache.has(url))
             return;
 

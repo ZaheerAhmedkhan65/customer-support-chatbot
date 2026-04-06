@@ -438,8 +438,8 @@ router.get('/analytics/chart-data', authenticate, async (req, res) => {
             const found = rows.find(r => r.date === dateStr);
             data.push(found ? found.count : 0);
         }
-        console.log('Chart data labels:', labels);
-        console.log('Chart data values:', data);
+        // console.log('Chart data labels:', labels);
+        // console.log('Chart data values:', data);
         res.json({ success: true, labels, data });
     } catch (error) {
         console.error(error);
