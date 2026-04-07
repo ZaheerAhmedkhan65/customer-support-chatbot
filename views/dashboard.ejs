@@ -323,9 +323,8 @@
                                                 <div class="card border-0  mb-4 animate__animated animate__fadeInUp">
                                                     <div class="card-body">
                                                         <p class="lead">Copy the script below and paste it into your
-                                                            website's HTML code, just before the closing
-                                                            <code></body></code> tag.</p>
-
+                                                            website's HTML code, just before the body closing tag.
+                                                        </p>
                                                         <div class="position-relative">
                                                             <pre class="bg-dark text-light p-3 rounded" id="embedCode"
                                                                 style="overflow-x: auto;"><%= embedCode || '' %></pre>
@@ -334,10 +333,13 @@
                                                                 Copy
                                                             </button>
                                                         </div>
+                                                        <ol class="ps-3 py-3 lead">
+                                                            <li class="mb-1">Copy the embed script</li>
+                                                            <li class="mb-1">Paste it before the closing body tag</li>
+                                                            <li class="mb-1">Reload your website</li>
+                                                        </ol>
                                                     </div>
                                                 </div>
-
-                                                <%- embedCode || '' %>
                                                     <% } %>
 
                                                         <!-- Analytics Tab -->

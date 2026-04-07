@@ -306,13 +306,34 @@ let analyticsHasMore = true;
 
 // Load analytics data
 function loadAnalyticsData() {
+    // Prevent duplicate calls while already loading
+    if (analyticsLoading) {
+        return;
+    }
+
+    // Reset pagination state for fresh data load
+    analyticsPage = 1;
+    analyticsHasMore = true;
+
+    // Clear existing conversations container
+    const container = document.getElementById('conversationsContainer');
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    // Reset the "no conversations" and "no more data" indicators
+    const noConversations = document.getElementById('noConversations');
+    const noMoreData = document.getElementById('noMoreData');
+    if (noConversations) noConversations.style.display = 'none';
+    if (noMoreData) noMoreData.style.display = 'none';
+
     // Load summary stats
     fetchAnalyticsSummary();
 
     // Load chart data
     fetchChartData();
 
-    // Load initial conversations
+    // Load initial conversations (loadMoreConversations will set analyticsLoading = true)
     loadMoreConversations();
 }
 
@@ -346,12 +367,21 @@ function fetchChartData() {
         .catch(err => console.error('Failed to load chart data:', err));
 }
 
+// Store chart instance to destroy before re-rendering
+let conversationChartInstance = null;
+
 // Render conversation chart
 function renderChart(labels, data) {
     const ctx = document.getElementById('conversationChart');
     if (!ctx) return;
 
-    new Chart(ctx, {
+    // Destroy existing chart instance before creating a new one
+    if (conversationChartInstance) {
+        conversationChartInstance.destroy();
+        conversationChartInstance = null;
+    }
+
+    conversationChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -457,28 +487,24 @@ function renderGroupedConversations(grouped) {
     Object.values(grouped).forEach((session, index) => {
         const messageCount = session.messages.length;
         const firstMessageTime = new Date(session.firstMessage).toLocaleString();
-        // Get the first customer message to display in the accordion header
-        const firstMessage = session.messages[0] ? session.messages[0].user_message : 'No message';
-        const truncatedMessage = firstMessage.length > 80 ? firstMessage.substring(0, 80) + '...' : firstMessage;
-
+      
         const accordion = document.createElement('div');
         accordion.className = 'accordion-item mb-3 border shadow-sm';
         accordion.style.borderRadius = '8px';
         accordion.style.overflow = 'hidden';
         accordion.innerHTML = `
             <h2 class="accordion-header" id="session-${session.session_id}" style="margin: 0;">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${session.session_id}" aria-expanded="false" aria-controls="collapse-${session.session_id}" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); transition: all 0.3s ease;">
+                <button class="accordion-button collapsed p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${session.session_id}" aria-expanded="false" aria-controls="collapse-${session.session_id}" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); transition: all 0.3s ease;">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="d-flex align-items-center" style="flex: 1; min-width: 0;">
                             <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
                                 <i class="bi bi-chat-square-text text-white" style="font-size: 0.9rem;"></i>
                             </div>
                             <div style="min-width: 0; flex: 1;">
-                                <div class="text-truncate mb-1" style="font-weight: 600; color: #2c3e50;">
-                                    "${escapeHtml(truncatedMessage)}"
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge bg-primary me-2" style="font-size: 0.7rem;">${messageCount} msg${messageCount > 1 ? 's' : ''}</span>
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="text-truncate mb-1" style="font-weight: 600; color: #2c3e50;">
+                                        <span class="text-truncate" style="font-size: 1.2rem;">${messageCount} message${messageCount > 1 ? 's' : ''}</span>
+                                    </div>
                                     <small class="text-muted" style="font-size: 0.75rem;">${firstMessageTime}</small>
                                 </div>
                             </div>
@@ -493,16 +519,14 @@ function renderGroupedConversations(grouped) {
                 <div class="accordion-body" style="background: #fafbfc; padding: 1.25rem;">
                     <div class="conversation-messages">
                         ${session.messages.map((msg, msgIndex) => `
-                            <div class="mb-3" style="padding: 0.75rem; background: white; border-radius: 8px; border-left: 4px solid ${msgIndex === 0 ? '#3B82F6' : '#10B981'}; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="mb-3" style="padding: 0.75rem; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                                 <div class="d-flex align-items-start mb-2">
-                                    <span class="badge ${msgIndex === 0 ? 'bg-primary' : 'bg-secondary'} me-2 mt-1" style="font-size: 0.7rem;">${msgIndex === 0 ? 'Customer' : 'Customer'}</span>
-                                    <div class="flex-grow-1">
-                                        <p class="mb-1" style="line-height: 1.5;">${escapeHtml(msg.user_message)}</p>
+                                    <div class="flex-grow-1 d-flex align-items-start justify-content-between">
+                                        <p class="mb-1" style="line-height: 1.5; font-weight: 600; font-size: 1rem;">${escapeHtml(msg.user_message)}</p>
                                         <small class="text-muted" style="font-size: 0.7rem;">${new Date(msg.created_at).toLocaleString()}</small>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-start mt-2" style="padding-left: 1rem; border-left: 2px solid #e5e7eb; margin-left: 0.5rem;">
-                                    <span class="badge bg-success me-2 mt-1" style="font-size: 0.7rem;">Bot</span>
+                                <div class="d-flex align-items-start mt-2">
                                     <div class="flex-grow-1">
                                         <p class="mb-1" style="line-height: 1.5; color: #374151;">${escapeHtml(msg.bot_response)}</p>
                                     </div>
@@ -545,11 +569,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Store scroll handler reference to prevent duplicate listeners
+let infiniteScrollHandler = null;
+
 // Setup infinite scroll
 function setupInfiniteScroll() {
     const scrollContainer = window;
 
-    scrollContainer.addEventListener('scroll', () => {
+    // Remove existing listener if present to prevent duplicates
+    if (infiniteScrollHandler) {
+        scrollContainer.removeEventListener('scroll', infiniteScrollHandler);
+        infiniteScrollHandler = null;
+    }
+
+    // Create and attach new scroll handler
+    infiniteScrollHandler = () => {
         const scrollTop = scrollContainer.scrollY || scrollContainer.scrollTop;
         const windowHeight = scrollContainer.innerHeight || document.documentElement.clientHeight;
         const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
@@ -557,7 +591,9 @@ function setupInfiniteScroll() {
         if (scrollTop + windowHeight >= documentHeight - 200) {
             loadMoreConversations();
         }
-    });
+    };
+
+    scrollContainer.addEventListener('scroll', infiniteScrollHandler);
 }
 
 // Attach event listeners for billing buttons

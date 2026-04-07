@@ -167,7 +167,6 @@ app.use((req, res, next) => {
     res.locals.title = req.query.title || '';
     res.locals.page = req.path === '/' ? 'index' : '';
     res.locals.path = req.path;
-    res.locals.queryTabParams = req.query.tab || '';
 
     next();
 });
