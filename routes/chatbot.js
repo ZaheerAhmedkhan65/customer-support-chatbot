@@ -404,7 +404,6 @@ router.get('/analytics/chart-data', authenticate, async (req, res) => {
     try {
         const pool = require('../config/database');
         const chatbot = await Chatbot.findByUserId(req.user.id);
-
         if (!chatbot) {
             return res.json({
                 success: true,
@@ -422,20 +421,20 @@ router.get('/analytics/chart-data', authenticate, async (req, res) => {
              ORDER BY date ASC`,
             [chatbot.id]
         );
-
         // Format labels and data
         const labels = [];
         const data = [];
         const today = new Date();
-
         for (let i = 6; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
-
             labels.push(date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
 
-            const found = rows.find(r => r.date === dateStr);
+            const found = rows.find(r => {
+                const rowDate = new Date(r.date).toISOString().split('T')[0];
+                return rowDate === dateStr;
+            });
             data.push(found ? found.count : 0);
         }
         // console.log('Chart data labels:', labels);

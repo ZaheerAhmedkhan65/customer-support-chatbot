@@ -40,9 +40,10 @@ router.get('/chatbot.js', async (req, res) => {
     // Get org-id from the script tag's data attribute
     const scripts = document.getElementsByTagName('script');
     let orgId = null;
-    for (let i = 0; i < scripts.length; i++) {
-        if (scripts[i].src && scripts[i].src.includes('chatbot.js')) {
-            orgId = scripts[i].getAttribute('data-org-id');
+            console.log('SupportBot: Loading chatbot.js', scripts);
+    for (let script of scripts) {
+        if (script.src && script.src.includes('chatbot.js')) {
+            orgId = script.getAttribute('data-org-id');
             break;
         }
     }
@@ -51,7 +52,6 @@ router.get('/chatbot.js', async (req, res) => {
         console.warn('SupportBot: No data-org-id attribute found on script tag');
         return;
     }
-    
     // Store orgId for later use
     window._chatbotOrgId = orgId;
     
