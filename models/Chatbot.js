@@ -15,11 +15,26 @@ class Chatbot {
         const uniqueWords = [...new Set(words)].slice(0, 10);
         return uniqueWords.join(', ');
     }
-    static async create(userId, businessName, subtitle, displaySubtitle, businessEmail) {
+    static async create(
+        userId,
+        businessName = '',
+        subtitle = '',
+        displaySubtitle = false,
+        businessEmail = null
+    ) {
         const [result] = await pool.execute(
-            'INSERT INTO chatbots (user_id, business_name, subtitle, display_subtitle, business_email) VALUES (?, ?, ?, ?, ?)',
-            [userId, businessName, subtitle, displaySubtitle, businessEmail]
+            `INSERT INTO chatbots
+        (user_id, business_name, subtitle, display_subtitle, business_email)
+        VALUES (?, ?, ?, ?, ?)`,
+            [
+                userId,
+                businessName,
+                subtitle,
+                displaySubtitle,
+                businessEmail
+            ]
         );
+
         return result.insertId;
     }
 
