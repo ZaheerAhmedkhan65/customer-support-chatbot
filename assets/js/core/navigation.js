@@ -151,8 +151,11 @@ function updatePage(html, url, replace = false) {
     }
 
     // Initialize the new page
-    SPA.initPage();
-
+    try {
+        SPA.initPage();
+    } catch (err) {
+        console.error('Page initialization error:', err);
+    }
     // Restore or set scroll position
     const scrollPos = SPA.scrollMemory[url];
     if (scrollPos !== undefined) {
