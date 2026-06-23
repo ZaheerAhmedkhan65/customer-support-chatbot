@@ -38,6 +38,12 @@ const routeConfig = [
         path: '/api/user',
         protected: false,
         description: 'User profile and settings'
+    },
+    {
+        name: 'crawler',
+        path: '/api/chatbot',
+        protected: true,
+        description: 'Website crawler for knowledge base import'
     }
 ];
 

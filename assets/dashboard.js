@@ -24,269 +24,150 @@ function copyEmbedCode() {
 // Note: Event listeners are now attached via SPA page initialization
 // The functions below are called from assets/js/pages/dashboard.js
 
-// Import JSON data
-function importJSON() {
-    const fileInput = document.getElementById('jsonFile');
-    const textArea = document.getElementById('jsonData');
-    let entries = null;
+// ============================================
+// Website Crawler Functions
+// ============================================
 
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                entries = JSON.parse(e.target.result);
-                processImport(entries);
-            } catch (err) {
-                alert('Invalid JSON file. Please check the format.');
-            }
-        };
-        reader.readAsText(file);
-    } else if (textArea.value.trim()) {
-        try {
-            entries = JSON.parse(textArea.value);
-            processImport(entries);
-        } catch (err) {
-            alert('Invalid JSON data. Please check the format.');
-        }
-    } else {
-        alert('Please upload a JSON file or paste JSON data.');
-    }
-}
+let crawledEntries = [];
 
-function processImport(entries) {
-    if (!Array.isArray(entries) || entries.length === 0) {
-        alert('No valid entries found in the JSON data.');
+// Crawl website and extract knowledge entries
+function crawlWebsite() {
+    const url = document.getElementById('crawlUrl').value.trim();
+    if (!url) {
+        alert('Please enter a website URL.');
         return;
     }
 
-    const validEntries = entries.filter(entry => entry.question && entry.answer);
+    // Show progress
+    document.getElementById('crawlProgress').classList.remove('d-none');
+    document.getElementById('crawlResults').classList.add('d-none');
+    document.getElementById('crawlError').classList.add('d-none');
+    document.getElementById('crawlBtn').disabled = true;
+    document.getElementById('crawlStatus').textContent = 'Crawling website...';
+    document.getElementById('crawlProgressBar').style.width = '30%';
 
-    if (validEntries.length === 0) {
-        alert('No valid entries found. Each entry must have at least a question and answer.');
-        return;
-    }
-
-    fetch('/api/chatbot/knowledge/bulk-import', {
+    fetch('/api/chatbot/crawl-website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entries: validEntries })
-    }).then(response => {
-        if (response.ok) {
-            // Use href assignment instead of reload() to avoid SSL protocol errors
-            window.location.href = '/dashboard?tab=knowledge';
+        body: JSON.stringify({ url })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('crawlBtn').disabled = false;
+        document.getElementById('crawlProgress').classList.add('d-none');
+
+        if (data.success && data.entries && data.entries.length > 0) {
+            crawledEntries = data.entries;
+            displayCrawledEntries(data.entries);
+        } else if (data.success) {
+            document.getElementById('crawlError').textContent = data.message || 'No useful content found on this website. Try a different URL.';
+            document.getElementById('crawlError').classList.remove('d-none');
         } else {
-            alert('Failed to import entries. Please try again.');
+            document.getElementById('crawlError').textContent = data.error || 'Failed to crawl website.';
+            document.getElementById('crawlError').classList.remove('d-none');
         }
-    }).catch(err => {
-        alert('Error: ' + err.message);
+    })
+    .catch(err => {
+        document.getElementById('crawlBtn').disabled = false;
+        document.getElementById('crawlProgress').classList.add('d-none');
+        document.getElementById('crawlError').textContent = 'Error: ' + err.message;
+        document.getElementById('crawlError').classList.remove('d-none');
     });
 }
 
-// AI Generation functions
-let generatedData = null;
+// Display crawled entries in the results area
+function displayCrawledEntries(entries) {
+    const list = document.getElementById('crawlEntriesList');
+    let html = '';
 
-function generateFAQs() {
-    const description = document.getElementById('businessDescription').value.trim();
-    if (!description) {
-        alert('Please describe your business first.');
+    entries.forEach((entry, index) => {
+        const preview = (entry.answer || '').substring(0, 150);
+        html += `
+            <div class="card mb-2 border">
+                <div class="card-body py-2 px-3">
+                    <div class="form-check">
+                        <input class="form-check-input crawl-entry-checkbox" type="checkbox" value="" id="crawl-entry-${index}" checked>
+                        <label class="form-check-label d-flex flex-column" for="crawl-entry-${index}">
+                            <span class="badge bg-secondary align-self-start mb-1">${(entry.content_type || 'general').toUpperCase()}</span>
+                            <strong>${escapeHtml(entry.question || 'Untitled')}</strong>
+                            <small class="text-muted">${escapeHtml(preview)}${entry.answer && entry.answer.length > 150 ? '...' : ''}</small>
+                            <small class="text-muted mt-1"><i class="bi bi-tags"></i> ${escapeHtml(entry.keywords || '')}</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    list.innerHTML = html;
+
+    // Enable import button when at least one checkbox is checked
+    const checkboxes = list.querySelectorAll('.crawl-entry-checkbox');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const anyChecked = list.querySelectorAll('.crawl-entry-checkbox:checked').length > 0;
+            document.getElementById('importCrawledBtn').disabled = !anyChecked;
+        });
+    });
+
+    document.getElementById('crawlResults').classList.remove('d-none');
+    document.getElementById('importCrawledBtn').disabled = false;
+}
+
+// Import selected crawled entries to knowledge base
+let isImporting = false;
+function importCrawledEntries() {
+    if (isImporting) return;
+    const importBtn = document.getElementById('importCrawledBtn');
+    if (!importBtn || importBtn.disabled) return;
+    isImporting = true;
+
+    const list = document.getElementById('crawlEntriesList');
+    const selectedIndices = [];
+
+    list.querySelectorAll('.crawl-entry-checkbox').forEach((cb, index) => {
+        if (cb.checked) {
+            selectedIndices.push(index);
+        }
+    });
+
+    if (selectedIndices.length === 0) {
+        alert('Please select at least one entry to import.');
         return;
     }
 
-    document.getElementById('generateFaqSpinner').classList.remove('d-none');
+    importBtn.disabled = true;
+    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Importing...';
 
-    fetch('/api/chatbot/knowledge/generate', {
+    const selectedEntries = selectedIndices.map(i => ({
+        content_type: crawledEntries[i].content_type,
+        question: crawledEntries[i].question,
+        answer: crawledEntries[i].answer,
+        keywords: crawledEntries[i].keywords
+    }));
+
+    fetch('/api/chatbot/crawl-website/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: description, type: 'faq' })
-    }).then(response => response.json())
-        .then(data => {
-            document.getElementById('generateFaqSpinner').classList.add('d-none');
-            displayGeneratedContent(data.result);
-        })
-        .catch(err => {
-            document.getElementById('generateFaqSpinner').classList.add('d-none');
-            alert('Failed to generate FAQs: ' + err.message);
-        });
-}
+        body: JSON.stringify({ entries: selectedEntries })
+    })
+    .then(response => response.json())
+    .then(data => {
+        importBtn.innerHTML = '<i class="bi bi-download"></i> Import Selected';
 
-function generateAnswer() {
-    const question = document.getElementById('answerQuestion').value.trim();
-    if (!question) {
-        alert('Please enter a question first.');
-        return;
-    }
-
-    document.getElementById('generateAnswerSpinner').classList.remove('d-none');
-
-    fetch('/api/chatbot/knowledge/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: question, type: 'answer' })
-    }).then(response => response.json())
-        .then(data => {
-            document.getElementById('generateAnswerSpinner').classList.add('d-none');
-            displayGeneratedContent(data.result);
-        })
-        .catch(err => {
-            document.getElementById('generateAnswerSpinner').classList.add('d-none');
-            alert('Failed to generate answer: ' + err.message);
-        });
-}
-
-function extractKeywords() {
-    const text = document.getElementById('keywordText').value.trim();
-    if (!text) {
-        alert('Please enter text to extract keywords from.');
-        return;
-    }
-
-    document.getElementById('generateKeywordsSpinner').classList.remove('d-none');
-
-    fetch('/api/chatbot/knowledge/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text, type: 'keywords' })
-    }).then(response => response.json())
-        .then(data => {
-            document.getElementById('generateKeywordsSpinner').classList.add('d-none');
-            displayGeneratedContent(data.result);
-        })
-        .catch(err => {
-            document.getElementById('generateKeywordsSpinner').classList.add('d-none');
-            alert('Failed to extract keywords: ' + err.message);
-        });
-}
-
-function displayGeneratedContent(content) {
-    generatedData = content;
-    const previewDiv = document.getElementById('generatedPreview');
-
-    try {
-        if (typeof content === 'string') {
-            let cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(cleanContent);
-
-            if (Array.isArray(parsed)) {
-                let html = '<div class="mb-3"><strong>Generated ' + parsed.length + ' entries:</strong></div>';
-                parsed.forEach((item, index) => {
-                    html += '<div class="card mb-2"><div class="card-body p-2">';
-                    html += '<strong>' + (index + 1) + '.</strong> ';
-                    if (item.question) html += '<strong>Q:</strong> ' + item.question + '<br>';
-                    if (item.answer) html += '<strong>A:</strong> ' + item.answer.substring(0, 100) + '...<br>';
-                    if (item.keywords) html += '<small class="text-muted">Keywords: ' + item.keywords + '</small>';
-                    html += '</div></div>';
-                });
-                previewDiv.innerHTML = html;
-            } else {
-                previewDiv.innerHTML = '<pre>' + content + '</pre>';
-            }
+        if (data.success) {
+            alert(data.message || `Successfully imported ${data.addedCount} entries!`);
+            window.location.href = '/dashboard?tab=knowledge';
         } else {
-            previewDiv.innerHTML = '<p>' + content + '</p>';
+            alert('Failed to import: ' + (data.error || 'Unknown error'));
+            importBtn.disabled = false;
         }
-    } catch (e) {
-        previewDiv.innerHTML = '<pre>' + content + '</pre>';
-    }
-
-    document.getElementById('generatedContent').classList.remove('d-none');
-}
-
-function addGeneratedContent() {
-    if (!generatedData) return;
-
-    try {
-        let entries;
-        if (typeof generatedData === 'string') {
-            let cleanContent = generatedData.replace(/```json/g, '').replace(/```/g, '').trim();
-            entries = JSON.parse(cleanContent);
-        } else {
-            entries = generatedData;
-        }
-
-        if (!Array.isArray(entries)) {
-            entries = [{
-                content_type: 'faq',
-                question: 'Generated Question',
-                answer: typeof generatedData === 'string' ? generatedData : JSON.stringify(generatedData),
-                keywords: ''
-            }];
-        }
-
-        fetch('/api/chatbot/knowledge/bulk-import', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entries: entries })
-        }).then(response => {
-            if (response.ok) {
-                // Use href assignment instead of reload() to avoid SSL protocol errors
-                window.location.href = '/dashboard?tab=knowledge';
-            } else {
-                alert('Failed to add generated content.');
-            }
-        }).catch(err => {
-            alert('Error: ' + err.message);
-        });
-    } catch (e) {
-        alert('Could not parse generated content. Please try again.');
-    }
-}
-
-// Note: Template modal event is attached via SPA page initialization
-
-function loadTemplates() {
-    fetch('/api/chatbot/knowledge/templates')
-        .then(response => response.json())
-        .then(data => {
-            const templatesList = document.getElementById('templatesList');
-            if (data.templates && data.templates.length > 0) {
-                let html = '';
-                data.templates.forEach(template => {
-                    html += '<div class="list-group-item">';
-                    html += '<div class="d-flex w-100 justify-content-between align-items-center">';
-                    html += '<div>';
-                    html += '<h6 class="mb-1">' + template.name + '</h6>';
-                    html += '<small class="text-muted">' + template.description + '</small>';
-                    html += '<div class="mt-1"><span class="badge bg-secondary">' + template.category + '</span>';
-                    html += '<span class="badge bg-info ms-1">' + template.entries.length + ' entries</span></div>';
-                    html += '</div>';
-                    html += '<form action="#" method="POST">';
-                    html += '<input type="hidden" name="templateId" value="' + template.id + '">';
-                    html += '<button type="submit" class="btn btn-sm btn-primary apply-template-btn">Add Template</button>';
-                    html += '</form>';
-                    html += '</div></div>';
-                });
-                templatesList.innerHTML = html;
-
-                // Add event listeners to template buttons
-                document.querySelectorAll('.apply-template-btn').forEach(btn => {
-                    btn.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const form = this.closest('form');
-                        const templateId = form.querySelector('input[name="templateId"]').value;
-
-                        fetch('/api/chatbot/knowledge/apply-template', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ templateId: templateId })
-                        }).then(response => {
-                            if (response.ok) {
-                                // Use href assignment instead of reload() to avoid SSL protocol errors
-                                window.location.href = '/dashboard?tab=knowledge';
-                            } else {
-                                alert('Failed to apply template.');
-                            }
-                        }).catch(err => {
-                            alert('Error: ' + err.message);
-                        });
-                    });
-                });
-            } else {
-                templatesList.innerHTML = '<p class="text-muted text-center">No templates available.</p>';
-            }
-        })
-        .catch(err => {
-            document.getElementById('templatesList').innerHTML = '<p class="text-danger text-center">Failed to load templates.</p>';
-        });
+    })
+    .catch(err => {
+        importBtn.innerHTML = '<i class="bi bi-download"></i> Import Selected';
+        importBtn.disabled = false;
+        alert('Error: ' + err.message);
+    });
 }
 
 // ============================================
