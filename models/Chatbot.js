@@ -102,18 +102,53 @@ class Chatbot {
     }
 
     static async bulkAddKnowledge(chatbotId, entries) {
-        // entries is an array of { content_type, question, answer, keywords }
-        const values = entries.map(entry => [
-            chatbotId,
-            entry.content_type || 'general',
-            entry.question || '',
-            entry.answer || '',
-            entry.keywords || ''
-        ]);
-        
+        // Normalize crawler/varied content types to the exact values the DB accepts.
+        // These match the options used by the manual knowledge-base form.
+        function normalizeType(raw) {
+            const v = (raw || 'general').toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
+            if (['faq','frequently asked questions','f-a-q'].includes(v)) return 'faq';
+            if (['policy','policies'].includes(v)) return 'policy';
+            if (['delivery','deliveryinfo','deliveryinfo','deliveryinformation'].includes(v) || v === 'delivery') return 'delivery';
+            if (['refund','refundpolicy','refundpolicies'].includes(v)) return 'refund';
+            if (['product','productdetails','productdetail'].includes(v)) return 'product';
+            if (['shipping','shippinginformation','shippinginfo'].includes(v)) return 'shipping';
+            if (['pricing','pricingplans','plan','plans','subscription'].includes(v)) return 'pricing';
+            if (['account','accountmanagement'].includes(v)) return 'account';
+            if (['technical','technicalsupport','troubleshooting'].includes(v)) return 'technical';
+            if (['billing','billinginvoicing','invoice','invoices','payment'].includes(v)) return 'billing';
+            if (['security','securityprivacy'].includes(v)) return 'security';
+            if (['returns','returnsexchanges','exchange','exchanges','refund'].includes(v)) return 'returns';
+            if (['warranty','warrantyinformation','guarantee','guarantees'].includes(v)) return 'warranty';
+            if (['installation','installationsetup','setup','gettingstarted','guide','tutorial'].includes(v)) return 'installation';
+            if (['integration','integrationsapi','api','developer','developers','integrations'].includes(v)) return 'integration';
+            if (['compliance','compliancelegal','terms','termsofservice'].includes(v)) return 'compliance';
+            if (['training','trainings'].includes(v)) return 'training';
+            if (['maintenance','maintenanceupkeep','upkeep','care'].includes(v)) return 'maintenance';
+            return 'general';
+        }
+
+        const values = entries.map(entry => {
+            return [
+                chatbotId,
+                normalizeType(entry.content_type),
+                (entry.question || '').replace(/\s+/g, ' ').trim().substring(0, 500),
+                (entry.answer || '').substring(0, 5000),
+                (entry.keywords || '').substring(0, 200)
+            ];
+        });
+
+        if (values.length === 0) return 0;
+
+        // Build placeholders for each row: (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), ...
+        const placeholders = values.map(() => '(?, ?, ?, ?, ?)').join(', ');
+        const flatValues = values.flat();
+
+        // Log for debugging
+        console.log('INSERT placeholders:', placeholders);
+        console.log('INSERT flatValues:', JSON.stringify(flatValues).substring(0, 500));
         const [result] = await pool.execute(
-            'INSERT INTO knowledge_base (chatbot_id, content_type, question, answer, keywords) VALUES ?',
-            [values]
+            `INSERT INTO knowledge_base (chatbot_id, content_type, question, answer, keywords) VALUES ${placeholders}`,
+            flatValues
         );
         return result.affectedRows;
     }
