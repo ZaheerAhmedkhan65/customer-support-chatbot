@@ -134,13 +134,20 @@ router.post('/knowledge', authenticate, async (req, res) => {
 // Update knowledge via POST with _method=PUT
 router.post('/knowledge/:id', authenticate, async (req, res) => {
     try {
+        const isJsonRequest = req.accepts('json');
         if (req.query._method === 'PUT' || (req.body && req.body._method === 'PUT')) {
             const { content_type, question, answer, keywords } = req.body;
             await Chatbot.updateKnowledge(req.params.id, { content_type, question, answer, keywords });
+            if (isJsonRequest) {
+                return res.json({ success: true, message: 'Knowledge updated successfully!' });
+            }
             res.cookie('success', 'Knowledge updated successfully!', { maxAge: 5000 });
             res.redirect('/dashboard?tab=knowledge');
         } else if (req.query._method === 'DELETE' || (req.body && req.body._method === 'DELETE')) {
             await Chatbot.deleteKnowledge(req.params.id);
+            if (isJsonRequest) {
+                return res.json({ success: true, message: 'Knowledge deleted successfully!' });
+            }
             res.cookie('success', 'Knowledge deleted successfully!', { maxAge: 5000 });
             res.redirect('/dashboard?tab=knowledge');
         } else {
@@ -148,6 +155,10 @@ router.post('/knowledge/:id', authenticate, async (req, res) => {
         }
     } catch (error) {
         console.error(error);
+        const isJsonRequest = req.accepts('json');
+        if (isJsonRequest) {
+            return res.status(500).json({ success: false, message: 'Failed to update knowledge' });
+        }
         res.cookie('error', 'Failed to update knowledge', { maxAge: 5000 });
         res.redirect('/dashboard?tab=knowledge');
     }

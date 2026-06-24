@@ -249,6 +249,7 @@ function attachDashboardEventListeners() {
                         deleteSelectedBtn.disabled = false;
                         updateBulkDeleteButton();
                     } else {
+                        alert('Knowledge deleted successfully!');
                         setTimeout(() => {
                             window.location.href = '/dashboard?tab=knowledge';
                         }, 150);
