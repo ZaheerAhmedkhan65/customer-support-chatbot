@@ -1,0 +1,290 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Admin Dashboard</h1>
+        <a href="/admin" class="btn btn-outline-secondary">Refresh</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Users</h6>
+                    <h3 class="mb-0"><%= stats.users %></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Chatbots</h6>
+                    <h3 class="mb-0"><%= stats.chatbots %></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Conversations</h6>
+                    <h3 class="mb-0"><%= stats.conversations %></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Knowledge Entries</h6>
+                    <h3 class="mb-0"><%= stats.knowledgeEntries %></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Keys Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">API Keys</h5>
+            <button class="btn btn-primary btn-sm" id="openAddKeyModalBtn">
+                Add API Key
+            </button>
+        </div>
+        <div class="card-body">
+            <% if (apiKeys.length === 0) { %>
+                <p class="text-muted mb-0">No API keys configured. Add one to enable AI features.</p>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% apiKeys.forEach(key => { %>
+                                <tr>
+                                    <td><%= key.id %></td>
+                                    <td><span class="badge bg-secondary"><%= key.service %></span></td>
+                                    <td><%= key.name || '-' %></td>
+                                    <td>
+                                        <% if (key.is_active) { %>
+                                            <span class="badge bg-success">Active</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">Inactive</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(key.created_at).toLocaleDateString() %></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary js-toggle-key" data-id="<%= key.id %>" data-active="<%= !key.is_active %>">
+                                            <%= key.is_active ? 'Deactivate' : 'Activate' %>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger js-delete-key" data-id="<%= key.id %>">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">System</h5>
+                    <p class="text-muted">Manage system settings and monitor health.</p>
+                    <a href="/dashboard" class="btn btn-outline-primary btn-sm">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Users</h5>
+                    <p class="text-muted">View and manage user accounts.</p>
+                        <a href="/admin/pages/users" class="btn btn-outline-primary btn-sm">View Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Subscriptions</h5>
+                    <p class="text-muted">Monitor subscription plans and revenue.</p>
+                        <a href="/admin/pages/subscriptions" class="btn btn-outline-primary btn-sm">View Subscriptions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add API Key Modal -->
+<div class="modal fade" id="addApiKeyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add API Key</h5>
+                <button type="button" class="btn-close" id="closeModalHeaderBtn"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addApiKeyForm">
+                    <div class="mb-3">
+                        <label class="form-label">Service</label>
+                        <select class="form-select" name="service" required>
+                            <option value="gemini">Google Gemini</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" placeholder="e.g., Primary Key">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-control" name="key_value" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="closeAddKeyModalBtn">Cancel</button>
+                <button type="button" class="btn btn-primary js-add-api-key">Add Key</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('click', function(e) {
+    var openBtn = e.target.closest('#openAddKeyModalBtn');
+    var closeBtn = e.target.closest('#closeAddKeyModalBtn');
+    var closeHeaderBtn = e.target.closest('#closeModalHeaderBtn');
+    if (openBtn) {
+        var m = document.getElementById('addApiKeyModal');
+        if (m && typeof bootstrap !== 'undefined' && bootstrap.Modal) bootstrap.Modal.getOrCreateInstance(m).show();
+    }
+    if (closeBtn || closeHeaderBtn) {
+        var m = document.getElementById('addApiKeyModal');
+        if (m && typeof bootstrap !== 'undefined' && bootstrap.Modal) bootstrap.Modal.getOrCreateInstance(m).hide();
+    }
+    if (e.target.closest('.js-add-api-key')) {
+        addApiKey();
+    }
+});
+
+async function addApiKey() {
+    const form = document.getElementById('addApiKeyForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/admin/api-keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            alert('API key added successfully');
+            location.reload();
+        } else {
+            alert(result.error || 'Failed to add API key');
+        }
+    } catch (err) {
+        console.error('Error adding API key:', err);
+        alert('Failed to add API key');
+    }
+}
+
+async function toggleApiKey(id, newStatus) {
+    try {
+        const res = await fetch('/admin/api-keys/' + encodeURIComponent(id), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: newStatus })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            alert('API key ' + (newStatus ? 'activated' : 'deactivated'));
+            location.reload();
+        } else {
+            alert(result.error || 'Failed to update API key');
+        }
+    } catch (err) {
+        console.error('Error toggling API key:', err);
+        alert('Failed to update API key');
+    }
+}
+
+async function deleteApiKey(id) {
+    if (!confirm('Are you sure you want to delete this API key?')) return;
+
+    try {
+        const res = await fetch('/admin/api-keys/' + encodeURIComponent(id), {
+            method: 'DELETE'
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            alert('API key deleted');
+            location.reload();
+        } else {
+            alert(result.error || 'Failed to delete API key');
+        }
+    } catch (err) {
+        console.error('Error deleting API key:', err);
+        alert('Failed to delete API key');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const toggleBtn = e.target.closest('.js-toggle-key');
+    const deleteBtn = e.target.closest('.js-delete-key');
+
+    if (toggleBtn) {
+        const id = toggleBtn.getAttribute('data-id');
+        const active = toggleBtn.getAttribute('data-active');
+        const newStatus = active === 'true';
+        toggleApiKey(id, newStatus);
+    }
+
+    if (deleteBtn) {
+        const id = deleteBtn.getAttribute('data-id');
+        if (!confirm('Are you sure you want to delete this API key?')) return;
+        deleteApiKey(id);
+    }
+});
+
+async function loadUsers() {
+    try {
+        const res = await fetch('/admin/users');
+        const data = await res.json();
+        console.log('Users:', data.users);
+        alert('Users loaded. Check console for details.');
+    } catch (err) {
+        console.error('Error loading users:', err);
+    }
+}
+
+async function loadSubscriptions() {
+    try {
+        const res = await fetch('/admin/subscriptions');
+        const data = await res.json();
+        console.log('Subscriptions:', data.subscriptions);
+        alert('Subscriptions loaded. Check console for details.');
+    } catch (err) {
+        console.error('Error loading subscriptions:', err);
+    }
+}
+</script>

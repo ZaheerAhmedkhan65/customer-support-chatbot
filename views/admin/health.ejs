@@ -1,0 +1,76 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>System Health</h1>
+        <a href="/admin" class="btn btn-outline-secondary">Back to Admin</a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Database</h6>
+                    <h3 class="mb-0" id="healthDb">Checking...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Gemini Service</h6>
+                    <h3 class="mb-0" id="healthGemini">Checking...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Status</h6>
+                    <h3 class="mb-0" id="healthStatus">Checking...</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Health Details</h5>
+        </div>
+        <div class="card-body">
+            <pre id="healthDetails" class="mb-0">Loading...</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadHealth() {
+    try {
+        const res = await fetch('/admin/api/health');
+        const data = await res.json();
+        const dbEl = document.getElementById('healthDb');
+        const geminiEl = document.getElementById('healthGemini');
+        const statusEl = document.getElementById('healthStatus');
+        const detailsEl = document.getElementById('healthDetails');
+
+        dbEl.textContent = data.database || 'unknown';
+        geminiEl.textContent = data.gemini || 'unknown';
+        statusEl.textContent = data.status || 'unknown';
+
+        if (data.status === 'healthy') {
+            dbEl.className = 'mb-0 text-success';
+            geminiEl.className = 'mb-0 text-success';
+            statusEl.className = 'mb-0 text-success';
+        } else {
+            dbEl.className = 'mb-0 text-danger';
+            geminiEl.className = 'mb-0 text-warning';
+            statusEl.className = 'mb-0 text-danger';
+        }
+
+        detailsEl.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+        console.error('Error loading health:', err);
+        document.getElementById('healthDetails').textContent = 'Failed to load health status';
+    }
+}
+
+loadHealth();
+</script>

@@ -1,79 +1,61 @@
 (function () {
-    // Get organization ID and API URL from script tag
-    const scripts = document.getElementsByTagName('script');
-    let orgId = null;
-    let scriptSrc = null;
-
-    for (let script of scripts) {
-        if (script.src && script.src.includes('chatbot.js')) {
-            orgId = script.getAttribute('data-org-id');
-            scriptSrc = script.src;
-            break;
-        }
-    }
-
-    if (!orgId) {
-        console.error('Chatbot: Missing data-org-id attribute');
-        return;
-    }
-
-    // Extract base URL from script src
-    let apiUrl = '';
-    if (scriptSrc) {
+    // Resolve API base URL: prefer injected value, then script origin, then page origin
+    let apiUrl = window._chatbotApiUrl || window.location.origin;
+    if (!window._chatbotApiUrl) {
         try {
-            const url = new URL(scriptSrc);
-            apiUrl = url.origin;
+            const scripts = document.getElementsByTagName('script');
+            for (let script of scripts) {
+                const src = script.getAttribute('src') || '';
+                if (src.includes('chatbot.js')) {
+                    const url = new URL(src);
+                    apiUrl = url.origin;
+                    break;
+                }
+            }
         } catch (e) {
-            apiUrl = window.location.origin;
+            // keep apiUrl as window.location.origin
         }
-    } else {
-        apiUrl = window.location.origin;
     }
 
-    // Configuration
+    // Configuration defaults (used as fallback)
+    let orgId = window._chatbotOrgId;
+    if (!orgId) {
+        try {
+            const scripts = document.getElementsByTagName('script');
+            for (let script of scripts) {
+                const src = script.getAttribute('src') || '';
+                if (src.includes('chatbot.js')) {
+                    orgId = script.getAttribute('data-org-id');
+                    break;
+                }
+            }
+        } catch (e) {
+            // keep orgId as null/undefined
+        }
+    }
+
     const config = {
         apiUrl: apiUrl,
         orgId: orgId,
-        position: 'right', // Will be updated from server
-        themeColor: '#212529',
-        businessName: 'Customer Support',
-        subtitle: 'Customer Support',
-        displaySubtitle: false,
-        welcomeMessage: 'Hello! How can I help you today?',
+        position: window._chatbotConfig?.buttonPosition || 'right',
+        themeColor: window._chatbotConfig?.themeColor || '#3B82F6',
+        businessName: window._chatbotConfig?.businessName || 'Customer Support',
+        subtitle: window._chatbotConfig?.subtitle || 'Customer Support',
+        displaySubtitle: window._chatbotConfig?.displaySubtitle || false,
+        welcomeMessage: window._chatbotConfig?.welcomeMessage || 'Hello! How can I help you today?',
         quickReplies: ['Help', 'Pricing', 'Contact', 'FAQ', 'Talk to agent', 'Other', 'None of these']
     };
 
-
-    // Load chatbot configuration from server (public endpoint for embedded widgets)
-    async function loadConfig() {
-        try {
-            const response = await fetch(`${config.apiUrl}/api/chatbot/public-settings?org_id=${config.orgId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.chatbot) {
-                    config.position = data.chatbot.button_position || 'right';
-                    config.themeColor = data.chatbot.theme_color || '#212529';
-                    config.businessName = data.chatbot.business_name || 'Customer Support';
-                    config.subtitle = data.chatbot.subtitle || 'Customer Support';
-                    config.displaySubtitle = data.chatbot.display_subtitle || false;
-                    config.welcomeMessage = data.chatbot.welcome_message || 'Hello! How can I help you today?';
-                }
-            }
-            console.log('Chatbot config loaded:', config);
-        } catch (error) {
-            console.error('Failed to load chatbot config:', error);
+    function createChatbot() {
+        if (!config.orgId) {
+            console.warn('Chatbot: skipped because orgId is missing');
+            return;
         }
-    }
 
-    // Create chatbot UI
-
-    async function createChatbot() {
-    await loadConfig();
-
-    // Create container
-    const container = document.createElement('div');
-    container.id = 'ai-chatbot-container';
-    container.innerHTML = `
+        // Create container
+        const container = document.createElement('div');
+        container.id = 'ai-chatbot-container';
+        container.innerHTML = `
             <style>
                 #ai-chatbot-container {
                     position: fixed;
@@ -82,7 +64,6 @@
                     z-index: 999999;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
                 }
-                
                 .chatbot-button {
                     width: 60px;
                     height: 60px;
@@ -98,12 +79,10 @@
                     font-size: 24px;
                     transition: transform 0.2s, box-shadow 0.2s;
                 }
-                
                 .chatbot-button:hover {
                     transform: scale(1.05);
                     box-shadow: 0 6px 16px rgba(0,0,0,0.2);
                 }
-
                 #close-btn {
                     background: none;
                     border: none;
@@ -114,12 +93,10 @@
                     border-radius: 50%;
                     transition: background 0.2s, color 0.2s;
                 }
-
                 #close-btn:hover {
                     color: ${config.themeColor};
-                    background: white;                    
+                    background: white;
                 }
-                
                 .chatbot-dialog {
                     position: absolute;
                     bottom: 80px;
@@ -134,95 +111,49 @@
                     overflow: hidden;
                     animation: slideUp 0.3s ease;
                 }
-                
                 @keyframes slideUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                
                 .chatbot-header {
                     background: ${config.themeColor};
                     color: white;
                     padding: 16px;
                     text-align: start;
                 }
-                
-                .chatbot-header h3 {
-                    margin: 0;
-                    font-size: 25px;
-                }
-                
-                .chatbot-header p {
-                    margin: 4px 0 0;
-                    font-size: 12px;
-                    opacity: 0.6;
-                }
-                
+                .chatbot-header h3 { margin: 0; font-size: 25px; }
+                .chatbot-header p { margin: 4px 0 0; font-size: 12px; opacity: 0.6; }
                 .chatbot-messages {
                     flex: 1;
                     overflow-y: auto;
                     padding: 16px;
                     background: #f9fafb;
                 }
-
-                /* Scrollbar */
-                .chatbot-messages::-webkit-scrollbar {
-                    width: 6px;
-                }
-
-                .chatbot-messages::-webkit-scrollbar-track {
-                    background: #f1f5f9;
-                }
-
-                .chatbot-messages::-webkit-scrollbar-thumb {
-                    background: ${config.themeColor};
-                    border-radius: 3px;
-                }
-
-                .chatbot-messages::-webkit-scrollbar-thumb:hover {
-                    background: ${config.themeColor};
-                }
-
+                .chatbot-messages::-webkit-scrollbar { width: 6px; }
+                .chatbot-messages::-webkit-scrollbar-track { background: #f1f5f9; }
+                .chatbot-messages::-webkit-scrollbar-thumb { background: ${config.themeColor}; border-radius: 3px; }
+                .chatbot-messages::-webkit-scrollbar-thumb:hover { background: ${config.themeColor}; }
                 .message {
                     margin-bottom: 12px;
                     display: flex;
                     animation: fadeIn 0.3s ease;
                 }
-                
                 @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                
-                .message.user {
-                    justify-content: flex-end;
-                }
-                
+                .message.user { justify-content: flex-end; }
                 .message-content {
                     max-width: 80%;
                     padding: 10px 14px;
                     border-radius: 18px;
                     word-wrap: break-word;
                 }
-                
                 .message.user .message-content {
                     background: ${config.themeColor};
                     color: white;
                     border-bottom-right-radius: 4px;
                 }
-                
                 .message.bot .message-content {
                     background: white;
                     color: #1f2937;
@@ -230,7 +161,6 @@
                     border-bottom-left-radius: 4px;
                     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
                 }
-
                 .quick-replies {
                     display: flex;
                     justify-content: center;
@@ -240,7 +170,6 @@
                     background: #fff;
                     border-top: 1px solid #eee;
                 }
-
                 .quick-reply {
                     background: #f1f5f9;
                     border: none;
@@ -249,11 +178,7 @@
                     cursor: pointer;
                     font-size: 12px;
                 }
-
-                .quick-reply:hover {
-                    background: #e2e8f0;
-                }
-                
+                .quick-reply:hover { background: #e2e8f0; }
                 .chatbot-input-container {
                     padding: 16px;
                     background: white;
@@ -261,7 +186,6 @@
                     display: flex;
                     gap: 8px;
                 }
-
                 #emoji-btn {
                     border: none;
                     background: none;
@@ -270,11 +194,7 @@
                     border-radius: 50%;
                     transition: background 0.2s;
                 }
-                
-                #emoji-btn:hover {
-                    background: #f1f5f9;
-                }
-                
+                #emoji-btn:hover { background: #f1f5f9; }
                 .chatbot-input {
                     flex: 1;
                     padding: 10px;
@@ -284,11 +204,7 @@
                     outline: none;
                     transition: border-color 0.2s;
                 }
-                
-                .chatbot-input:focus {
-                    border-color: ${config.themeColor};
-                }
-                
+                .chatbot-input:focus { border-color: ${config.themeColor}; }
                 .chatbot-send {
                     padding: 8px 16px;
                     background: ${config.themeColor};
@@ -299,16 +215,8 @@
                     font-size: 14px;
                     transition: opacity 0.2s;
                 }
-                
-                .chatbot-send:hover:not(:disabled) {
-                    opacity: 0.9;
-                }
-                
-                .chatbot-send:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-                
+                .chatbot-send:hover:not(:disabled) { opacity: 0.9; }
+                .chatbot-send:disabled { opacity: 0.5; cursor: not-allowed; }
                 .typing-indicator {
                     display: inline-block;
                     padding: 10px 14px;
@@ -316,7 +224,6 @@
                     border: 1px solid #e5e7eb;
                     border-radius: 18px;
                 }
-                
                 .typing-dot {
                     display: inline-block;
                     width: 6px;
@@ -326,31 +233,15 @@
                     margin: 0 2px;
                     animation: typing 1.4s infinite;
                 }
-                
-                .typing-dot:nth-child(2) {
-                    animation-delay: 0.2s;
-                }
-                
-                .typing-dot:nth-child(3) {
-                    animation-delay: 0.4s;
-                }
-                
+                .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+                .typing-dot:nth-child(3) { animation-delay: 0.4s; }
                 @keyframes typing {
-                    0%, 60%, 100% {
-                        transform: translateY(0);
-                    }
-                    30% {
-                        transform: translateY(-10px);
-                    }
+                    0%, 60%, 100% { transform: translateY(0); }
+                    30% { transform: translateY(-10px); }
                 }
-                
-                .chatbot-dialog.hidden {
-                    display: none;
-                }
+                .chatbot-dialog.hidden { display: none; }
             </style>
-            <button class="chatbot-button" id="chatbot-toggle">
-                💬
-            </button>
+            <button class="chatbot-button" id="chatbot-toggle">💬</button>
             <div class="chatbot-dialog hidden" id="chatbot-dialog">
                 <div class="chatbot-header">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -367,9 +258,7 @@
                     </div>
                 </div>
                 <div class="quick-replies" id="quick-replies">
-                    ${config.quickReplies.map(reply =>
-        `<button class="quick-reply">${reply}</button>`
-    ).join('')}
+                    ${config.quickReplies.map(reply => `<button class="quick-reply">${reply}</button>`).join('')}
                 </div>
                 <div class="chatbot-input-container">
                     <button id="emoji-btn">😊</button>
@@ -379,218 +268,187 @@
             </div>
         `;
 
-    document.body.appendChild(container);
+        document.body.appendChild(container);
 
-    // Set up event listeners
-    const toggleBtn = document.getElementById('chatbot-toggle');
-    const dialog = document.getElementById('chatbot-dialog');
-    const input = document.getElementById('chatbot-input');
-    const sendBtn = document.getElementById('chatbot-send');
-    const messagesContainer = document.getElementById('chatbot-messages');
+        const toggleBtn = document.getElementById('chatbot-toggle');
+        const dialog = document.getElementById('chatbot-dialog');
+        const input = document.getElementById('chatbot-input');
+        const sendBtn = document.getElementById('chatbot-send');
+        const messagesContainer = document.getElementById('chatbot-messages');
 
-    let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    let isProcessing = false;
+        let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let isProcessing = false;
 
-    toggleBtn.addEventListener('click', () => {
-        dialog.classList.toggle('hidden');
-    });
+        toggleBtn.addEventListener('click', () => dialog.classList.toggle('hidden'));
 
-    input.addEventListener('input', () => {
-        sendBtn.disabled = input.value.trim() === '' || isProcessing;
-    });
+        input.addEventListener('input', () => {
+            sendBtn.disabled = input.value.trim() === '' || isProcessing;
+        });
 
-    async function sendMessage() {
-        const message = input.value.trim();
-        if (!message || isProcessing) return;
+        async function sendMessage() {
+            const message = input.value.trim();
+            if (!message || isProcessing) return;
 
-        // Add user message
-        addMessage(message, 'user');
-        input.value = '';
-        isProcessing = true;
-        sendBtn.disabled = true;
+            addMessage(message, 'user');
+            input.value = '';
+            isProcessing = true;
+            sendBtn.disabled = true;
 
-        // Show typing indicator
-        const typingId = showTypingIndicator();
+            const typingId = showTypingIndicator();
 
-        try {
-            const response = await fetch(`${config.apiUrl}/api/chat/message`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    org_id: config.orgId,
-                    message: message,
-                    session_id: sessionId
-                })
-            });
+            try {
+                const response = await fetch(`${config.apiUrl}/api/chat/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        org_id: config.orgId,
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
 
-            const data = await response.json();
-            removeTypingIndicator(typingId);
+                const data = await response.json();
+                removeTypingIndicator(typingId);
 
-            if (response.ok) {
-                addMessage(data.response, 'bot');
-            } else {
-                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+                if (response.ok) {
+                    addMessage(data.response, 'bot');
+                } else {
+                    addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+                }
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessage('Sorry, I\'m having trouble connecting. Please check your internet connection.', 'bot');
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+                input.focus();
             }
-        } catch (error) {
-            removeTypingIndicator(typingId);
-            addMessage('Sorry, I\'m having trouble connecting. Please check your internet connection.', 'bot');
-        } finally {
-            isProcessing = false;
-            sendBtn.disabled = false;
-            input.focus();
         }
-    }
 
-    function addMessage(text, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
 
-    function showTypingIndicator() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot';
-        typingDiv.id = 'typing-indicator';
-        typingDiv.innerHTML = `
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
                 <div class="typing-indicator">
                     <span class="typing-dot"></span>
                     <span class="typing-dot"></span>
                     <span class="typing-dot"></span>
                 </div>
             `;
-        messagesContainer.appendChild(typingDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        return 'typing-indicator';
-    }
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return 'typing-indicator';
+        }
 
-    function removeTypingIndicator(id) {
-        const indicator = document.getElementById(id);
-        if (indicator) indicator.remove();
-    }
+        function removeTypingIndicator(id) {
+            const indicator = document.getElementById(id);
+            if (indicator) indicator.remove();
+        }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-    sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    const quickReplyBtns = document.querySelectorAll('.quick-reply');
-
-    quickReplyBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            input.value = btn.textContent;
-            sendMessage();
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
         });
-    });
 
-    const emojiBtn = document.getElementById('emoji-btn');
-    let emojiPicker = null;
+        const quickReplyBtns = document.querySelectorAll('.quick-reply');
+        quickReplyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                input.value = btn.textContent;
+                sendMessage();
+            });
+        });
 
-    const emojis = ['😊', '👍', '❤️', '😂', '🎉', '🤔', '👋', '🙏'];
+        const emojiBtn = document.getElementById('emoji-btn');
+        let emojiPicker = null;
+        const emojis = ['😊', '👍', '❤️', '😂', '🎉', '🤔', '👋', '🙏'];
 
-    emojiBtn.addEventListener('click', (e) => {
-        if (emojiPicker) {
-            emojiPicker.remove();
-            emojiPicker = null;
-            return;
-        }
-
-        emojiPicker = document.createElement('div');
-        emojiPicker.className = 'emoji-picker';
-
-        emojiPicker.style.cssText = `
-        position: fixed;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 8px;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        z-index: 999999;
-    `;
-
-        // ✅ Get button position
-        const rect = emojiBtn.getBoundingClientRect();
-
-        const pickerWidth = 200;
-        const pickerHeight = 150 * 0.6;
-
-        let left = rect.left;
-        let top = rect.top - pickerHeight - 10;
-
-        // ✅ Prevent overflow RIGHT
-        if (left + pickerWidth > window.innerWidth) {
-            left = window.innerWidth - pickerWidth - 10;
-        }
-
-        // ✅ Prevent overflow LEFT
-        if (left < 10) {
-            left = 10;
-        }
-
-        // ✅ Prevent overflow TOP
-        if (top < 10) {
-            top = rect.bottom + 10;
-        }
-
-        emojiPicker.style.left = left + 'px';
-        emojiPicker.style.top = top + 'px';
-
-        // Add emojis
-        emojis.forEach(e => {
-            const btn = document.createElement('button');
-            btn.textContent = e;
-            btn.style.cssText = `
-            font-size: 20px;
-            padding: 6px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            border-radius: 6px;
-        `;
-
-            btn.onmouseenter = () => btn.style.background = '#f1f5f9';
-            btn.onmouseleave = () => btn.style.background = 'none';
-
-            btn.onclick = () => {
-                input.value += e;
+        emojiBtn.addEventListener('click', (e) => {
+            if (emojiPicker) {
                 emojiPicker.remove();
                 emojiPicker = null;
-                input.focus();
-                sendBtn.disabled = input.value.trim() === '' || isProcessing; // Update send button state
-            };
+                return;
+            }
 
-            emojiPicker.appendChild(btn);
+            emojiPicker = document.createElement('div');
+            emojiPicker.className = 'emoji-picker';
+            emojiPicker.style.cssText = `
+                position: fixed;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 8px;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+                z-index: 999999;
+            `;
+
+            const rect = emojiBtn.getBoundingClientRect();
+            const pickerWidth = 200;
+            const pickerHeight = 150 * 1.2;
+            let left = rect.left;
+            let top = rect.top - pickerHeight - 10;
+
+            if (left + pickerWidth > window.innerWidth) left = window.innerWidth - pickerWidth - 10;
+            if (left < 10) left = 10;
+            if (top < 10) top = rect.bottom + 10;
+
+            emojiPicker.style.left = left + 'px';
+            emojiPicker.style.top = top + 'px';
+
+            emojis.forEach(e => {
+                const btn = document.createElement('button');
+                btn.textContent = e;
+                btn.style.cssText = `
+                    font-size: 20px;
+                    padding: 6px;
+                    border: none;
+                    background: none;
+                    cursor: pointer;
+                    border-radius: 6px;
+                `;
+                btn.onmouseenter = () => btn.style.background = '#f1f5f9';
+                btn.onmouseleave = () => btn.style.background = 'none';
+                btn.onclick = () => {
+                    input.value += e;
+                    emojiPicker.remove();
+                    emojiPicker = null;
+                    input.focus();
+                    sendBtn.disabled = input.value.trim() === '' || isProcessing;
+                };
+                emojiPicker.appendChild(btn);
+            });
+
+            document.body.appendChild(emojiPicker);
         });
 
-        document.body.appendChild(emojiPicker);
-    });
+        const closeBtn = document.getElementById('close-btn');
+        closeBtn.addEventListener('click', () => dialog.classList.add('hidden'));
 
-    const closeBtn = document.getElementById('close-btn');
+        document.addEventListener('click', (e) => {
+            if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+                emojiPicker.remove();
+                emojiPicker = null;
+            }
+        });
+    }
 
-    closeBtn.addEventListener('click', () => {
-        dialog.classList.add('hidden');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-            emojiPicker.remove();
-            emojiPicker = null;
-        }
-    });
-}
-
-
-    // Initialize chatbot when page loads
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', createChatbot);
     } else {

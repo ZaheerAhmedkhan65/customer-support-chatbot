@@ -7,7 +7,15 @@ const router = require('./base')();
 
 router.post('/message', async (req, res) => {
     try {
-        const { org_id, message, session_id } = req.body;
+        const { org_id: bodyOrgId, message, session_id } = req.body;
+        const org_id = bodyOrgId || (req.user && req.user.org_id);
+
+        if (!org_id) {
+            return res.status(400).json({ error: 'org_id is required' });
+        }
+
+        const safeMessage = typeof message === 'string' ? message.trim() : '';
+        const safeSessionId = typeof session_id === 'string' && session_id.length > 0 ? session_id : null;
 
         // Get user by org_id
         const [users] = await pool.execute('SELECT id FROM users WHERE org_id = ?', [org_id]);
@@ -32,21 +40,6 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // Record the conversation usage (this will also check limits)
-        const usageResult = await Usage.recordConversation(userId, chatbot.id, session_id);
-
-        if (!usageResult.success) {
-            return res.status(429).json({
-                error: 'Monthly conversation limit exceeded',
-                message: 'You have reached your monthly conversation limit. Please upgrade your plan to continue using the chatbot.',
-                upgradeUrl: '/dashboard?tab=billing',
-                usage: {
-                    used: usageResult.used,
-                    limit: usageResult.limit
-                }
-            });
-        }
-
         // Get knowledge base
         const knowledge = await Chatbot.getKnowledge(chatbot.id);
 
@@ -54,12 +47,15 @@ router.post('/message', async (req, res) => {
         const context = geminiService.buildContext(knowledge);
 
         // Generate response
-        const response = await geminiService.generateResponse(message, context);
+        const response = await geminiService.generateResponse(safeMessage, context);
 
-        // Save conversation (already tracked in usage_tracking)
+        // Record the conversation usage AFTER successful AI response
+        const usageResult = await Usage.recordConversation(userId, chatbot.id, safeSessionId);
+
+        // Save conversation
         await pool.execute(
             'INSERT INTO conversations (chatbot_id, session_id, user_message, bot_response) VALUES (?, ?, ?, ?)',
-            [chatbot.id, session_id, message, response]
+            [chatbot.id, safeSessionId, safeMessage, response]
         );
 
         res.json({
