@@ -28,51 +28,8 @@ router.get('/chatbot.js', async (req, res) => {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
             res.setHeader('Cache-Control', 'public, max-age=300');
             res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-
-            // Serve a version that fetches config dynamically
-            const dynamicLoaderScript = `
-// Chatbot Dynamic Loader
-// This script will fetch configuration from the server based on data-org-id attribute
-(function() {
-    // Get org-id from the script tag's data attribute
-    const scripts = document.getElementsByTagName('script');
-    let orgId = null;
-            console.log('SupportBot: Loading chatbot.js', scripts);
-    for (let script of scripts) {
-        if (script.src && script.src.includes('chatbot.js')) {
-            orgId = script.getAttribute('data-org-id');
-            break;
-        }
-    }
-    
-    if (!orgId) {
-        console.warn('SupportBot: No data-org-id attribute found on script tag');
-        return;
-    }
-    // Store orgId for later use
-    window._chatbotOrgId = orgId;
-    
-    // Fetch configuration
-    fetch('/chatbot/config?org-id=' + encodeURIComponent(orgId))
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window._chatbotConfig = data.config;
-                console.log('SupportBot: Configuration loaded for', data.config.businessName);
-            } else {
-                console.error('SupportBot: Failed to load configuration:', data.error);
-            }
-        })
-        .catch(err => {
-            console.error('SupportBot: Error fetching configuration:', err);
-        });
-})();
-
-`;
-            res.send(dynamicLoaderScript + chatbotScript);
+            res.send(chatbotScript);
             return;
         }
 
@@ -137,8 +94,13 @@ console.warn('SupportBot: You have exceeded your monthly conversation limit. Upg
 ` : ''}
 `;
 
-        // Prepend configuration to the script
-        const modifiedScript = configScript + '\n' + chatbotScript;
+        const bootstrapScript = `
+(function(){
+    window._chatbotOrgId = ${JSON.stringify(orgId)};
+    window._chatbotApiUrl = ${JSON.stringify(req.protocol + '://' + req.get('host'))};
+})();
+`;
+        const bootstrapWithComment = '/* chatbot bootstrap */\n' + bootstrapScript + '\n';
 
         // Set headers
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -148,7 +110,7 @@ console.warn('SupportBot: You have exceeded your monthly conversation limit. Upg
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-        res.send(modifiedScript);
+        res.send(bootstrapWithComment + chatbotScript);
     } catch (error) {
         console.error('Error serving chatbot.js:', error);
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -174,6 +136,11 @@ router.get('/chatbot.css', (req, res) => {
  */
 router.get('/chatbot/config', async (req, res) => {
     try {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
         const orgId = req.query['org-id'] || req.headers['x-org-id'];
 
         if (!orgId) {
