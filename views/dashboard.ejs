@@ -120,6 +120,79 @@
                                                         placeholder="Hello! How can I help you today?"><%= chatbot && chatbot.welcome_message ? chatbot.welcome_message : 'Hello! How can I help you today?' %></textarea>
                                                 </div>
                                             </div>
+                                            <hr>
+                                            <h5 class="mb-3">Chatbot Behavior</h5>
+                                            <div class="row mb-3">
+                                                <label for="default_chatbot_open" class="col-sm-3 col-form-label">Default State</label>
+                                                <div class="col-sm-9">
+                                                    <select class="form-select" id="default_chatbot_open" name="default_chatbot_open">
+                                                        <option value="0" <%=chatbot && chatbot.default_chatbot_open === false ? 'selected' : '' %>>Closed (user must click to open)</option>
+                                                        <option value="1" <%=chatbot && chatbot.default_chatbot_open === true ? 'selected' : '' %>>Open automatically</option>
+                                                    </select>
+                                                    <small class="text-muted">Choose whether the chat window should be open or closed when the page loads.</small>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <h5 class="mb-3">Emoji Settings</h5>
+                                            <div class="row mb-3">
+                                                <label for="custom_emojis" class="col-sm-3 col-form-label">Custom Emojis</label>
+                                                <div class="col-sm-9">
+                                                    <%
+                                                        let customEmojisValue = '😊, 👍, ❤️, 😂, 🎉, 🤔, 👋, 🙏';
+                                                        if (chatbot && chatbot.custom_emojis) {
+                                                            try {
+                                                                const parsed = JSON.parse(chatbot.custom_emojis);
+                                                                if (Array.isArray(parsed)) {
+                                                                    customEmojisValue = parsed.join(', ');
+                                                                }
+                                                            } catch (e) {}
+                                                        }
+                                                    %>
+                                                    <input type="text" class="form-control" id="custom_emojis" name="custom_emojis"
+                                                        value="<%= customEmojisValue %>"
+                                                        placeholder="😊, 👍, ❤️, 😂, 🎉, 🤔, 👋, 🙏">
+                                                    <small class="text-muted">Comma-separated emoji list. Leave empty to hide emoji button.</small>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <label for="show_emoji_toggle" class="col-sm-3 col-form-label">Show Emoji Button</label>
+                                                <div class="col-sm-9">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="show_emoji_toggle" name="show_emoji_toggle" <%=chatbot && chatbot.show_emoji_toggle === false ? '' : 'checked' %>>
+                                                        <label class="form-check-label" for="show_emoji_toggle">Enable emoji picker</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <h5 class="mb-3">Quick Replies</h5>
+                                            <div class="row mb-3">
+                                                <label for="custom_quick_replies" class="col-sm-3 col-form-label">Quick Replies</label>
+                                                <div class="col-sm-9">
+                                                    <%
+                                                        let quickRepliesValue = 'Help\nPricing\nContact\nFAQ';
+                                                        if (chatbot && chatbot.custom_quick_replies) {
+                                                            try {
+                                                                const parsed = JSON.parse(chatbot.custom_quick_replies);
+                                                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                                                    quickRepliesValue = parsed.join('\n');
+                                                                }
+                                                            } catch (e) {}
+                                                        }
+                                                    %>
+                                                    <textarea class="form-control" id="custom_quick_replies" name="custom_quick_replies" rows="3"
+                                                        placeholder="Enter one quick reply per line"><%= quickRepliesValue %></textarea>
+                                                    <small class="text-muted">One quick reply per line. These appear as clickable buttons below the chat.</small>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <label for="show_quick_replies" class="col-sm-3 col-form-label">Show Quick Replies</label>
+                                                <div class="col-sm-9">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="show_quick_replies" name="show_quick_replies" <%=chatbot && chatbot.show_quick_replies === false ? '' : 'checked' %>>
+                                                        <label class="form-check-label" for="show_quick_replies">Show quick reply buttons</label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                                 <button type="submit" class="btn btn-primary">Save Settings</button>
                                             </div>
@@ -127,6 +200,8 @@
                                     </div>
                                 </div>
                                 <% } %>
+
+                                    <!-- Knowledge Base Tab -->
 
                                     <!-- Knowledge Base Tab -->
                                     <% if (tab==='knowledge' ) { %>

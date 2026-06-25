@@ -58,15 +58,43 @@ router.get('/public-settings', async (req, res) => {
             });
         }
 
+        // Parse JSON fields
+        let customEmojis = null;
+        if (chatbot.custom_emojis) {
+            try {
+                customEmojis = JSON.parse(chatbot.custom_emojis);
+            } catch (e) {
+                customEmojis = null;
+            }
+        }
+        
+        let customQuickReplies = null;
+        if (chatbot.custom_quick_replies) {
+            try {
+                customQuickReplies = JSON.parse(chatbot.custom_quick_replies);
+            } catch (e) {
+                customQuickReplies = null;
+            }
+        }
+        
+        // Normalize boolean values (handle NULL/undefined from database)
+        const showEmojiToggle = chatbot.show_emoji_toggle === true;
+        const showQuickReplies = chatbot.show_quick_replies === true;
+        
         // Return only the public-facing settings
         res.json({
             chatbot: {
                 business_name: chatbot.business_name || 'Customer Support',
                 subtitle: chatbot.subtitle || 'Customer Support',
-                display_subtitle: chatbot.subtitle || false,
+                display_subtitle: chatbot.display_subtitle || false,
                 theme_color: chatbot.theme_color || '#3B82F6',
                 button_position: chatbot.button_position || 'right',
-                welcome_message: chatbot.welcome_message || 'Hello! How can I help you today?'
+                welcome_message: chatbot.welcome_message || 'Hello! How can I help you today?',
+                custom_emojis: customEmojis,
+                show_emoji_toggle: showEmojiToggle,
+                custom_quick_replies: customQuickReplies,
+                show_quick_replies: showQuickReplies,
+                default_chatbot_open: chatbot.default_chatbot_open || false
             }
         });
     } catch (error) {
@@ -95,7 +123,37 @@ router.post('/settings', authenticate, async (req, res) => {
             chatbot = await Chatbot.findByUserId(req.user.id);
         }
 
-        await Chatbot.update(chatbot.id, req.body);
+        // Process form data before saving
+        const processedData = { ...req.body };
+        
+        // Convert default_chatbot_open from string to boolean
+        if (processedData.default_chatbot_open !== undefined) {
+            processedData.default_chatbot_open = processedData.default_chatbot_open === '1' || processedData.default_chatbot_open === true;
+        } else {
+            processedData.default_chatbot_open = false;
+        }
+        
+        // Convert checkbox values to boolean (unchecked = false)
+        processedData.show_emoji_toggle = processedData.show_emoji_toggle === 'on' || processedData.show_emoji_toggle === true;
+        processedData.show_quick_replies = processedData.show_quick_replies === 'on' || processedData.show_quick_replies === true;
+        
+        // Convert custom_emojis from comma-separated string to JSON array
+        if (processedData.custom_emojis && typeof processedData.custom_emojis === 'string') {
+            const emojis = processedData.custom_emojis.split(',').map(e => e.trim()).filter(e => e);
+            processedData.custom_emojis = emojis.length > 0 ? JSON.stringify(emojis) : null;
+        } else if (!processedData.custom_emojis) {
+            processedData.custom_emojis = null;
+        }
+        
+        // Convert custom_quick_replies from newline-separated string to JSON array
+        if (processedData.custom_quick_replies && typeof processedData.custom_quick_replies === 'string') {
+            const replies = processedData.custom_quick_replies.split('\n').map(r => r.trim()).filter(r => r);
+            processedData.custom_quick_replies = replies.length > 0 ? JSON.stringify(replies) : null;
+        } else if (!processedData.custom_quick_replies) {
+            processedData.custom_quick_replies = null;
+        }
+
+        await Chatbot.update(chatbot.id, processedData);
 
         // Redirect back to dashboard with success message
         res.cookie('success', 'Settings saved successfully!', { maxAge: 5000 });
@@ -339,7 +397,29 @@ router.get('/embed-script', authenticate, async (req, res) => {
         // Use http for localhost, https for production
         const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
         const scriptUrl = `${protocol}://${host}/chatbot.js`;
-        const embedCode = `<script src="${scriptUrl}" data-org-id="${user.org_id}"></script>`;
+        
+        // Get chatbot settings to include in embed code
+        const chatbot = await Chatbot.findByUserId(req.user.id);
+        let configScript = '';
+        
+        if (chatbot) {
+            const config = {
+                businessName: chatbot.business_name || 'Customer Support',
+                subtitle: chatbot.subtitle || 'Customer Support',
+                displaySubtitle: chatbot.display_subtitle || false,
+                themeColor: chatbot.theme_color || '#3B82F6',
+                buttonPosition: chatbot.button_position || 'right',
+                welcomeMessage: chatbot.welcome_message || 'Hello! How can I help you today?',
+                customEmojis: chatbot.custom_emojis ? JSON.parse(chatbot.custom_emojis) : null,
+                showEmojiToggle: chatbot.show_emoji_toggle !== false,
+                customQuickReplies: chatbot.custom_quick_replies ? JSON.parse(chatbot.custom_quick_replies) : null,
+                showQuickReplies: chatbot.show_quick_replies !== false,
+                defaultChatbotOpen: chatbot.default_chatbot_open || false
+            };
+            configScript = `\n<script>\n    window._chatbotConfig = ${JSON.stringify(config)};\n<\/script>`;
+        }
+        
+        const embedCode = `<script src="${scriptUrl}" data-org-id="${user.org_id}"></script>${configScript}`;
 
         res.json({ embedCode, scriptUrl, orgId: user.org_id });
     } catch (error) {

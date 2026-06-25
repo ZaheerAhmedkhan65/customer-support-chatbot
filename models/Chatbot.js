@@ -67,9 +67,16 @@ class Chatbot {
         const welcome_message = data.welcome_message || (existing ? existing.welcome_message : 'Hello! How can I help you today?');
         const is_active = data.is_active !== undefined ? data.is_active : (existing ? existing.is_active : 1);
         
+        // Handle custom_emojis and custom_quick_replies as JSON
+        const custom_emojis = data.custom_emojis !== undefined ? data.custom_emojis : (existing ? existing.custom_emojis : null);
+        const show_emoji_toggle = data.show_emoji_toggle !== undefined ? data.show_emoji_toggle : (existing ? existing.show_emoji_toggle : true);
+        const custom_quick_replies = data.custom_quick_replies !== undefined ? data.custom_quick_replies : (existing ? existing.custom_quick_replies : null);
+        const show_quick_replies = data.show_quick_replies !== undefined ? data.show_quick_replies : (existing ? existing.show_quick_replies : true);
+        const default_chatbot_open = data.default_chatbot_open !== undefined ? data.default_chatbot_open : (existing ? existing.default_chatbot_open : false);
+        
         const [result] = await pool.execute(
-            'UPDATE chatbots SET business_name = ?, subtitle = ?, display_subtitle = ?, business_email = ?, business_logo = ?, theme_color = ?, button_position = ?, welcome_message = ?, is_active = ? WHERE id = ?',
-            [business_name, subtitle, display_subtitle, business_email, business_logo, theme_color, button_position, welcome_message, is_active, chatbotId]
+            'UPDATE chatbots SET business_name = ?, subtitle = ?, display_subtitle = ?, business_email = ?, business_logo = ?, theme_color = ?, button_position = ?, welcome_message = ?, is_active = ?, custom_emojis = ?, show_emoji_toggle = ?, custom_quick_replies = ?, show_quick_replies = ?, default_chatbot_open = ? WHERE id = ?',
+            [business_name, subtitle, display_subtitle, business_email, business_logo, theme_color, button_position, welcome_message, is_active, custom_emojis, show_emoji_toggle, custom_quick_replies, show_quick_replies, default_chatbot_open, chatbotId]
         );
         return result;
     }

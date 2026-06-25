@@ -34,6 +34,7 @@
         }
     }
 
+    // Default config
     const config = {
         apiUrl: apiUrl,
         orgId: orgId,
@@ -43,14 +44,64 @@
         subtitle: window._chatbotConfig?.subtitle || 'Customer Support',
         displaySubtitle: window._chatbotConfig?.displaySubtitle || false,
         welcomeMessage: window._chatbotConfig?.welcomeMessage || 'Hello! How can I help you today?',
-        quickReplies: ['Help', 'Pricing', 'Contact', 'FAQ', 'Talk to agent', 'Other', 'None of these']
+        customEmojis: window._chatbotConfig?.customEmojis || ['😊', '👍', '❤️', '😂', '🎉', '🤔', '👋', '🙏'],
+        showEmojiToggle: window._chatbotConfig?.showEmojiToggle !== false,
+        customQuickReplies: window._chatbotConfig?.customQuickReplies || ['Help', 'Pricing', 'Contact', 'FAQ', 'Talk to agent', 'Other', 'None of these'],
+        showQuickReplies: window._chatbotConfig?.showQuickReplies !== false,
+        defaultChatbotOpen: window._chatbotConfig?.defaultChatbotOpen || false
     };
 
-    function createChatbot() {
+    async function createChatbot() {
         if (!config.orgId) {
             console.warn('Chatbot: skipped because orgId is missing');
             return;
         }
+
+        // Fetch public settings if not provided via window._chatbotConfig
+        if (!window._chatbotConfig) {
+            try {
+                const settingsUrl = `${config.apiUrl}/api/chatbot/public-settings?org_id=${config.orgId}`;
+                const response = await fetch(settingsUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.chatbot) {
+                        // Merge fetched settings with defaults
+                        if (data.chatbot.business_name) config.businessName = data.chatbot.business_name;
+                        if (data.chatbot.subtitle) config.subtitle = data.chatbot.subtitle;
+                        if (data.chatbot.display_subtitle !== undefined) config.displaySubtitle = data.chatbot.display_subtitle;
+                        if (data.chatbot.theme_color) config.themeColor = data.chatbot.theme_color;
+                        if (data.chatbot.button_position) config.position = data.chatbot.button_position;
+                        if (data.chatbot.welcome_message) config.welcomeMessage = data.chatbot.welcome_message;
+                        if (data.chatbot.custom_emojis && Array.isArray(data.chatbot.custom_emojis) && data.chatbot.custom_emojis.length > 0) { config.customEmojis = data.chatbot.custom_emojis; }
+                        if (data.chatbot.show_emoji_toggle === false) { config.showEmojiToggle = false; }
+                        if (data.chatbot.custom_quick_replies && Array.isArray(data.chatbot.custom_quick_replies) && data.chatbot.custom_quick_replies.length > 0) { config.customQuickReplies = data.chatbot.custom_quick_replies; }
+                        if (data.chatbot.show_quick_replies === false) { config.showQuickReplies = false; }
+                        if (data.chatbot.default_chatbot_open !== undefined) { config.defaultChatbotOpen = data.chatbot.default_chatbot_open; }
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch chatbot settings:', error);
+            }
+        }
+
+        // Determine if chatbot should be open by default
+        const shouldBeOpen = config.defaultChatbotOpen;
+        const initialDialogClass = shouldBeOpen ? '' : 'hidden';
+
+        // Build emoji HTML
+        const emojiBtnHtml = config.showEmojiToggle && config.customEmojis && config.customEmojis.length > 0
+            ? `<button id="emoji-btn">😊</button>`
+            : '';
+
+        // Build quick replies HTML
+        const quickRepliesHtml = config.showQuickReplies && config.customQuickReplies && config.customQuickReplies.length > 0
+            ? `<div class="quick-replies" id="quick-replies">
+                ${config.customQuickReplies.map(reply => `<button class="quick-reply">${reply}</button>`).join('')}
+               </div>`
+            : '';
+
+        // Build subtitle HTML
+        const subtitleHtml = config.displaySubtitle ? `<p>${config.subtitle}</p>` : '';
 
         // Create container
         const container = document.createElement('div');
@@ -63,6 +114,28 @@
                     bottom: 20px;
                     z-index: 999999;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                }
+                @media (max-width: 576px) {
+                    #ai-chatbot-container {
+                        ${config.position}: 10px;
+                        bottom: 10px;
+                    }
+                    .chatbot-dialog {
+                        position: fixed !important;
+                        bottom: 80px !important;
+                        ${config.position}: 10px !important;
+                        left: 10px !important;
+                        right: 10px !important;
+                        width: auto !important;
+                        height: calc(100vh - 100px) !important;
+                        max-height: 600px !important;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .chatbot-dialog {
+                        width: calc(100vw - 40px) !important;
+                        height: 600px !important;
+                    }
                 }
                 .chatbot-button {
                     width: 60px;
@@ -242,12 +315,12 @@
                 .chatbot-dialog.hidden { display: none; }
             </style>
             <button class="chatbot-button" id="chatbot-toggle">💬</button>
-            <div class="chatbot-dialog hidden" id="chatbot-dialog">
+            <div class="chatbot-dialog ${initialDialogClass}" id="chatbot-dialog">
                 <div class="chatbot-header">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
                             <h3>${config.businessName}</h3>
-                            ${config.displaySubtitle ? `<p>${config.subtitle}</p>` : ''}
+                            ${subtitleHtml}
                         </div>
                         <button id="close-btn">✕</button>
                     </div>
@@ -257,11 +330,9 @@
                         <div class="message-content">${config.welcomeMessage}</div>
                     </div>
                 </div>
-                <div class="quick-replies" id="quick-replies">
-                    ${config.quickReplies.map(reply => `<button class="quick-reply">${reply}</button>`).join('')}
-                </div>
+                ${quickRepliesHtml}
                 <div class="chatbot-input-container">
-                    <button id="emoji-btn">😊</button>
+                    ${emojiBtnHtml}
                     <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type your message...">
                     <button class="chatbot-send" disabled id="chatbot-send">Send</button>
                 </div>
@@ -374,79 +445,84 @@
         });
 
         const emojiBtn = document.getElementById('emoji-btn');
-        let emojiPicker = null;
-        const emojis = ['😊', '👍', '❤️', '😂', '🎉', '🤔', '👋', '🙏'];
+        if (emojiBtn) {
+            let emojiPicker = null;
+            // Use configured emojis or fallback
+            const emojis = config.customEmojis && config.customEmojis.length > 0
+                ? config.customEmojis
+                : ['😊', '👍', '❤️', '😂', '🎉', '🤔', '👋', '🙏'];
 
-        emojiBtn.addEventListener('click', (e) => {
-            if (emojiPicker) {
-                emojiPicker.remove();
-                emojiPicker = null;
-                return;
-            }
-
-            emojiPicker = document.createElement('div');
-            emojiPicker.className = 'emoji-picker';
-            emojiPicker.style.cssText = `
-                position: fixed;
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 10px;
-                padding: 8px;
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 6px;
-                box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-                z-index: 999999;
-            `;
-
-            const rect = emojiBtn.getBoundingClientRect();
-            const pickerWidth = 200;
-            const pickerHeight = 150 * 1.2;
-            let left = rect.left;
-            let top = rect.top - pickerHeight - 10;
-
-            if (left + pickerWidth > window.innerWidth) left = window.innerWidth - pickerWidth - 10;
-            if (left < 10) left = 10;
-            if (top < 10) top = rect.bottom + 10;
-
-            emojiPicker.style.left = left + 'px';
-            emojiPicker.style.top = top + 'px';
-
-            emojis.forEach(e => {
-                const btn = document.createElement('button');
-                btn.textContent = e;
-                btn.style.cssText = `
-                    font-size: 20px;
-                    padding: 6px;
-                    border: none;
-                    background: none;
-                    cursor: pointer;
-                    border-radius: 6px;
-                `;
-                btn.onmouseenter = () => btn.style.background = '#f1f5f9';
-                btn.onmouseleave = () => btn.style.background = 'none';
-                btn.onclick = () => {
-                    input.value += e;
+            emojiBtn.addEventListener('click', (e) => {
+                if (emojiPicker) {
                     emojiPicker.remove();
                     emojiPicker = null;
-                    input.focus();
-                    sendBtn.disabled = input.value.trim() === '' || isProcessing;
-                };
-                emojiPicker.appendChild(btn);
+                    return;
+                }
+
+                emojiPicker = document.createElement('div');
+                emojiPicker.className = 'emoji-picker';
+                emojiPicker.style.cssText = `
+                    position: fixed;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    padding: 8px;
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 6px;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+                    z-index: 999999;
+                `;
+
+                const rect = emojiBtn.getBoundingClientRect();
+                const pickerWidth = 200;
+                const pickerHeight = 150 * 1.2;
+                let left = rect.left;
+                let top = rect.top - pickerHeight - 10;
+
+                if (left + pickerWidth > window.innerWidth) left = window.innerWidth - pickerWidth - 10;
+                if (left < 10) left = 10;
+                if (top < 10) top = rect.bottom + 10;
+
+                emojiPicker.style.left = left + 'px';
+                emojiPicker.style.top = top + 'px';
+
+                emojis.forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.textContent = emoji;
+                    btn.style.cssText = `
+                        font-size: 20px;
+                        padding: 6px;
+                        border: none;
+                        background: none;
+                        cursor: pointer;
+                        border-radius: 6px;
+                    `;
+                    btn.onmouseenter = () => btn.style.background = '#f1f5f9';
+                    btn.onmouseleave = () => btn.style.background = 'none';
+                    btn.onclick = () => {
+                        input.value += emoji;
+                        emojiPicker.remove();
+                        emojiPicker = null;
+                        input.focus();
+                        sendBtn.disabled = input.value.trim() === '' || isProcessing;
+                    };
+                    emojiPicker.appendChild(btn);
+                });
+
+                document.body.appendChild(emojiPicker);
             });
 
-            document.body.appendChild(emojiPicker);
-        });
+            document.addEventListener('click', (e) => {
+                if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+                    emojiPicker.remove();
+                    emojiPicker = null;
+                }
+            });
+        }
 
         const closeBtn = document.getElementById('close-btn');
         closeBtn.addEventListener('click', () => dialog.classList.add('hidden'));
-
-        document.addEventListener('click', (e) => {
-            if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-                emojiPicker.remove();
-                emojiPicker = null;
-            }
-        });
     }
 
     if (document.readyState === 'loading') {
