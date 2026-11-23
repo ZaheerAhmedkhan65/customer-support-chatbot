@@ -48,12 +48,13 @@ JWT_SECRET=your_jwt_secret_key
 
 ### 4. Run database migrations
 
-The database tables will be created automatically on first run. The following tables are created:
+After the core `users`, `chatbots`, `knowledge_base`, and `conversations` tables are available, run:
 
-- `users` - User accounts
-- `chatbots` - Chatbot configurations
-- `knowledge_base` - FAQ and knowledge base content
-- `conversations` - Chat conversation history
+```bash
+npm run migrate
+```
+
+This creates the subscription, usage-tracking, and contact-message tables, and adds a free subscription for existing users who do not have one.
 
 ### 5. Start the server
 

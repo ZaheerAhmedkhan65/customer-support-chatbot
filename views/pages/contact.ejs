@@ -1,4 +1,10 @@
 <div class="container py-5" data-page="contact">
+    <% if (success) { %>
+        <div data-app-notification data-app-notification-type="success" hidden><%= success %></div>
+    <% } %>
+    <% if (error) { %>
+        <div data-app-notification data-app-notification-type="error" hidden><%= error %></div>
+    <% } %>
     <div class="row justify-content-center">
         <div class="col-lg-6">
             <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInDown">Contact Us</h1>
@@ -6,24 +12,28 @@
             
             <div class="card shadow-sm mb-4 animate__animated animate__fadeInUp">
                 <div class="card-body">
-                    <form>
+                    <form method="POST" action="/pages/contact">
                         <div class="mb-3 animate__animated animate__fadeInLeft">
                             <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" placeholder="Your name">
+                            <input type="text" class="form-control" id="name" name="name" maxlength="100"
+                                value="<%= formData.name || '' %>" placeholder="Your name" required>
                         </div>
                         <div class="mb-3 animate__animated animate__fadeInRight">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" placeholder="your@email.com">
+                            <input type="email" class="form-control" id="email" name="email" maxlength="254"
+                                value="<%= formData.email || '' %>" placeholder="your@email.com" required>
                         </div>
                         <div class="mb-3 animate__animated animate__fadeInLeft">
                             <label for="subject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="subject" placeholder="How can we help?">
+                            <input type="text" class="form-control" id="subject" name="subject" maxlength="200"
+                                value="<%= formData.subject || '' %>" placeholder="How can we help?" required>
                         </div>
                         <div class="mb-3 animate__animated animate__fadeInRight">
                             <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" rows="5" placeholder="Your message..."></textarea>
+                            <textarea class="form-control" id="message" name="message" rows="5" maxlength="5000"
+                                placeholder="Your message..." required><%= formData.message || '' %></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 animate__animated animate__pulse animate__infinite">Send Message</button>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
                     </form>
                 </div>
             </div>

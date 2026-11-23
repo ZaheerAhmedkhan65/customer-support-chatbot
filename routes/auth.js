@@ -125,29 +125,28 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-router.get('/logout', (req, res) => {
-    // Clear JWT cookie
+router.get('/logout', (req, res, next) => {
     res.clearCookie('token');
 
-    // Destroy session if exists (for Google OAuth users)
-    if (req.session) {
-        req.session.destroy((err) => {
-            if (err) {
-                console.error('Session destruction error:', err);
-            }
+    const destroySession = () => {
+        if (!req.session || typeof req.session.destroy !== 'function') {
+            return res.redirect('/auth/signin');
+        }
+
+        req.session.destroy((error) => {
+            if (error) return next(error);
+            res.redirect('/auth/signin');
+        });
+    };
+
+    if (req.session && req.isAuthenticated?.() && typeof req.logout === 'function') {
+        return req.logout((error) => {
+            if (error) return next(error);
+            destroySession();
         });
     }
 
-    // Logout from passport if logged in
-    if (req.logout) {
-        req.logout((err) => {
-            if (err) {
-                console.error('Passport logout error:', err);
-            }
-        });
-    }
-
-    res.redirect('/auth/signin');
+    destroySession();
 });
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

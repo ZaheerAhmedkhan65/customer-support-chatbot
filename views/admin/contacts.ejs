@@ -1,0 +1,45 @@
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <aside class="col-12 col-lg-3 col-xl-2">
+            <%- include('_sidebar', { activePage: activePage }) %>
+        </aside>
+        <main class="col-12 col-lg-9 col-xl-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-1">Contact Messages</h1>
+                    <p class="text-muted mb-0">Latest <%= contacts.length %> submissions</p>
+                </div>
+            </div>
+
+            <% if (contacts.length === 0) { %>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-envelope-open display-5 text-muted" aria-hidden="true"></i>
+                        <p class="text-muted mt-3 mb-0">No contact messages have been submitted yet.</p>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="vstack gap-3">
+                    <% contacts.forEach(contact => { %>
+                        <article class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                                    <h2 class="h5 mb-0"><%= contact.subject %></h2>
+                                    <time class="small text-muted" datetime="<%= new Date(contact.created_at).toISOString() %>">
+                                        <%= new Date(contact.created_at).toLocaleString() %>
+                                    </time>
+                                </div>
+                                <p class="mb-2">
+                                    <strong><%= contact.name %></strong>
+                                    <span class="text-muted">·</span>
+                                    <a href="mailto:<%= contact.email %>"><%= contact.email %></a>
+                                </p>
+                                <p class="mb-0 text-break" style="white-space: pre-wrap;"><%= contact.message %></p>
+                            </div>
+                        </article>
+                    <% }) %>
+                </div>
+            <% } %>
+        </main>
+    </div>
+</div>
