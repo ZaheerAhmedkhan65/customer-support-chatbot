@@ -48,6 +48,20 @@ async function createSubscriptionTables() {
 
         console.log('✓ Usage tracking table created');
 
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS contact_messages (
+                id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(254) NOT NULL,
+                subject VARCHAR(200) NOT NULL,
+                message TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_contact_messages_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        console.log('✓ Contact messages table created');
+
         // Insert default free subscriptions for existing users without one
         await pool.execute(`
             INSERT INTO subscriptions (user_id, subscription_id, plan_id, status, current_period_start, current_period_end)

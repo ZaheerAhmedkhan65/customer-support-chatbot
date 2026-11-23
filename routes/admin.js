@@ -1,4 +1,5 @@
 const ApiKey = require('../models/ApiKey');
+const ContactMessage = require('../models/ContactMessage');
 const pool = require('../config/database');
 const router = require('./base')();
 
@@ -37,6 +38,20 @@ router.get('/pages/subscriptions', async (req, res) => {
 
 router.get('/pages/health', async (req, res) => {
     res.render('admin/health', { title: 'System Health', activePage: 'health' });
+});
+
+router.get('/pages/contacts', async (req, res) => {
+    try {
+        const contacts = await ContactMessage.getRecent();
+        res.render('admin/contacts', {
+            title: 'Contact Messages',
+            activePage: 'contacts',
+            contacts
+        });
+    } catch (error) {
+        console.error('Error fetching contact messages:', error);
+        res.status(500).send('Error loading contact messages');
+    }
 });
 
 router.get('/api-keys', async (req, res) => {

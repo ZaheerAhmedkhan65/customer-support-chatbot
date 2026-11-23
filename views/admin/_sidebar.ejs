@@ -19,6 +19,10 @@
                 href="/admin/pages/health" <%= activePage === 'health' ? 'aria-current="page"' : '' %>>
                 <i class="bi bi-heart-pulse me-2" aria-hidden="true"></i>System health
             </a>
+            <a class="nav-link <%= activePage === 'contacts' ? 'active' : 'text-body' %>"
+                href="/admin/pages/contacts" <%= activePage === 'contacts' ? 'aria-current="page"' : '' %>>
+                <i class="bi bi-envelope me-2" aria-hidden="true"></i>Contact messages
+            </a>
         </div>
         <hr>
         <a class="nav-link text-body px-3" href="/dashboard">
