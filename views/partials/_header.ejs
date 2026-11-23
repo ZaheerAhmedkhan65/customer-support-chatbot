@@ -28,7 +28,9 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-lg-end">
                             <li>
-                                <a href="/auth/logout" onclick="return confirm('Are you sure you want to logout?');" class="dropdown-item text-danger">Logout</a>
+                                <a href="/auth/logout" data-confirm-message="Are you sure you want to log out?"
+                                    data-confirm-title="Sign out" data-confirm-button="Sign out"
+                                    class="dropdown-item text-danger">Logout</a>
                             </li>
                         </ul>
                     </div>

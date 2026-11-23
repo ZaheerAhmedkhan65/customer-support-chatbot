@@ -44,16 +44,13 @@
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 ">
             <!-- Alert Messages -->
             <% if (typeof success !=='undefined' && success) { %>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div data-app-notification data-app-notification-type="success" hidden>
                     <%= success %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 <% } %>
                     <% if (typeof error !=='undefined' && error) { %>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div data-app-notification data-app-notification-type="error" hidden>
                             <%= error %>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                    aria-label="Close"></button>
                         </div>
                         <% } %>
 
@@ -319,7 +316,6 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div id="crawlError" class="alert alert-danger d-none mt-3"></div>
                                             </div>
                                         </div>
 

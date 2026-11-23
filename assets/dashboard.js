@@ -34,14 +34,13 @@ let crawledEntries = [];
 function crawlWebsite() {
     const url = document.getElementById('crawlUrl').value.trim();
     if (!url) {
-        alert('Please enter a website URL.');
+        window.showNotification('Please enter a website URL.', 'warning');
         return;
     }
 
     // Show progress
     document.getElementById('crawlProgress').classList.remove('d-none');
     document.getElementById('crawlResults').classList.add('d-none');
-    document.getElementById('crawlError').classList.add('d-none');
     document.getElementById('crawlBtn').disabled = true;
     document.getElementById('crawlStatus').textContent = 'Crawling website...';
     document.getElementById('crawlProgressBar').style.width = '30%';
@@ -60,18 +59,15 @@ function crawlWebsite() {
             crawledEntries = data.entries;
             displayCrawledEntries(data.entries);
         } else if (data.success) {
-            document.getElementById('crawlError').textContent = data.message || 'No useful content found on this website. Try a different URL.';
-            document.getElementById('crawlError').classList.remove('d-none');
+            window.showNotification(data.message || 'No useful content found on this website. Try a different URL.', 'warning');
         } else {
-            document.getElementById('crawlError').textContent = data.error || 'Failed to crawl website.';
-            document.getElementById('crawlError').classList.remove('d-none');
+            window.showNotification(data.error || 'Failed to crawl website.', 'error');
         }
     })
     .catch(err => {
         document.getElementById('crawlBtn').disabled = false;
         document.getElementById('crawlProgress').classList.add('d-none');
-        document.getElementById('crawlError').textContent = 'Error: ' + err.message;
-        document.getElementById('crawlError').classList.remove('d-none');
+        window.showNotification('Error: ' + err.message, 'error');
     });
 }
 
@@ -132,7 +128,8 @@ function importCrawledEntries() {
     });
 
     if (selectedIndices.length === 0) {
-        alert('Please select at least one entry to import.');
+        window.showNotification('Please select at least one entry to import.', 'warning');
+        isImporting = false;
         return;
     }
 
@@ -156,17 +153,19 @@ function importCrawledEntries() {
         importBtn.innerHTML = '<i class="bi bi-download"></i> Import Selected';
 
         if (data.success) {
-            alert(data.message || `Successfully imported ${data.addedCount} entries!`);
-            window.location.href = '/dashboard?tab=knowledge';
+            window.showNotification(data.message || `Successfully imported ${data.addedCount} entries!`, 'success');
+            setTimeout(() => {
+                window.location.href = '/dashboard?tab=knowledge';
+            }, 2700);
         } else {
-            alert('Failed to import: ' + (data.error || 'Unknown error'));
+            window.showNotification('Failed to import: ' + (data.error || 'Unknown error'), 'error');
             importBtn.disabled = false;
         }
     })
     .catch(err => {
         importBtn.innerHTML = '<i class="bi bi-download"></i> Import Selected';
         importBtn.disabled = false;
-        alert('Error: ' + err.message);
+        window.showNotification('Error: ' + err.message, 'error');
     });
 }
 
@@ -572,15 +571,15 @@ function contactSales() {
 }
 
 // Cancel subscription function
-function cancelSubscription() {
-    if (!confirm('Are you sure you want to cancel your subscription? You will be downgraded to the free Starter plan at the end of your current billing period.')) {
-        return;
-    }
-
-    // Second confirmation
-    if (!confirm('This action cannot be undone. Your chatbot will have limited features (1,000 conversations/month). Do you still want to cancel?')) {
-        return;
-    }
+async function cancelSubscription() {
+    if (!await window.showConfirm(
+        'You will be downgraded to the free Starter plan at the end of your current billing period. This action cannot be undone.',
+        {
+            title: 'Cancel subscription',
+            confirmText: 'Cancel subscription',
+            variant: 'danger'
+        }
+    )) return;
 
     fetch('/api/subscription/cancel', {
         method: 'POST',
@@ -589,14 +588,16 @@ function cancelSubscription() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                window.location.href = '/dashboard?tab=billing';
+                window.showNotification(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard?tab=billing';
+                }, 2700);
             } else {
-                alert('Failed to cancel subscription: ' + (data.error || 'Unknown error'));
+                window.showNotification('Failed to cancel subscription: ' + (data.error || 'Unknown error'), 'error');
             }
         })
         .catch(err => {
-            alert('Error: ' + err.message);
+            window.showNotification('Error: ' + err.message, 'error');
         });
 }
 
@@ -641,10 +642,11 @@ function updatePlanDisplay(planId) {
 }
 
 // Downgrade plan function
-function downgradePlan(planId) {
-    if (!confirm(`Are you sure you want to downgrade to the ${planId === 'free' ? 'Starter (Free)' : planId === 'professional' ? 'Professional ($7/mo)' : 'Enterprise'} plan?`)) {
-        return;
-    }
+async function downgradePlan(planId) {
+    if (!await window.showConfirm(
+        `Are you sure you want to downgrade to the ${planId === 'free' ? 'Starter (Free)' : planId === 'professional' ? 'Professional ($7/mo)' : 'Enterprise'} plan?`,
+        { title: 'Change subscription', confirmText: 'Continue', variant: 'warning' }
+    )) return;
 
     fetch('/api/subscription/downgrade', {
         method: 'POST',
@@ -654,14 +656,16 @@ function downgradePlan(planId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                window.location.href = '/dashboard?tab=billing';
+                window.showNotification(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard?tab=billing';
+                }, 2700);
             } else {
-                alert('Failed to downgrade plan: ' + (data.error || 'Unknown error'));
+                window.showNotification('Failed to downgrade plan: ' + (data.error || 'Unknown error'), 'error');
             }
         })
         .catch(err => {
-            alert('Error: ' + err.message);
+            window.showNotification('Error: ' + err.message, 'error');
         });
 }
 
