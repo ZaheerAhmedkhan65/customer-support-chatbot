@@ -12,6 +12,7 @@ router.get('/', async (req, res) => {
 
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
+            activePage: 'overview',
             apiKeys,
             stats: {
                 users: usersCount[0].count,
@@ -27,15 +28,15 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/pages/users', async (req, res) => {
-    res.render('admin/users', { title: 'User Management' });
+    res.render('admin/users', { title: 'User Management', activePage: 'users' });
 });
 
 router.get('/pages/subscriptions', async (req, res) => {
-    res.render('admin/subscriptions', { title: 'Subscription Management' });
+    res.render('admin/subscriptions', { title: 'Subscription Management', activePage: 'subscriptions' });
 });
 
 router.get('/pages/health', async (req, res) => {
-    res.render('admin/health', { title: 'System Health' });
+    res.render('admin/health', { title: 'System Health', activePage: 'health' });
 });
 
 router.get('/api-keys', async (req, res) => {

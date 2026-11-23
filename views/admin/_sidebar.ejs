@@ -1,0 +1,31 @@
+<nav class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-1">Admin</h2>
+        <p class="small text-muted mb-3">Platform management</p>
+        <div class="nav nav-pills flex-column gap-1">
+            <a class="nav-link <%= activePage === 'overview' ? 'active' : 'text-body' %>"
+                href="/admin" <%= activePage === 'overview' ? 'aria-current="page"' : '' %>>
+                <i class="bi bi-speedometer2 me-2" aria-hidden="true"></i>Overview
+            </a>
+            <a class="nav-link <%= activePage === 'users' ? 'active' : 'text-body' %>"
+                href="/admin/pages/users" <%= activePage === 'users' ? 'aria-current="page"' : '' %>>
+                <i class="bi bi-people me-2" aria-hidden="true"></i>Users
+            </a>
+            <a class="nav-link <%= activePage === 'subscriptions' ? 'active' : 'text-body' %>"
+                href="/admin/pages/subscriptions" <%= activePage === 'subscriptions' ? 'aria-current="page"' : '' %>>
+                <i class="bi bi-credit-card me-2" aria-hidden="true"></i>Subscriptions
+            </a>
+            <a class="nav-link <%= activePage === 'health' ? 'active' : 'text-body' %>"
+                href="/admin/pages/health" <%= activePage === 'health' ? 'aria-current="page"' : '' %>>
+                <i class="bi bi-heart-pulse me-2" aria-hidden="true"></i>System health
+            </a>
+        </div>
+        <hr>
+        <a class="nav-link text-body px-3" href="/dashboard">
+            <i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>Back to app
+        </a>
+        <a class="nav-link text-body px-3" href="/auth/logout">
+            <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Sign out
+        </a>
+    </div>
+</nav>
