@@ -54,10 +54,10 @@
             </button>
         </div>
         <div class="card-body">
-            <% if (apiKeys.length === 0) { %>
-                <p class="text-muted mb-0">No API keys configured. Add one to enable AI features.</p>
-            <% } else { %>
-                <div class="table-responsive">
+            <p id="apiKeysEmptyState" class="text-muted mb-0 <%= apiKeys.length ? 'd-none' : '' %>">
+                No API keys configured. Add one to enable AI features.
+            </p>
+            <div class="table-responsive <%= apiKeys.length ? '' : 'd-none' %>" id="apiKeysTableContainer">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -69,7 +69,7 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="apiKeysTableBody">
                             <% apiKeys.forEach(key => { %>
                                 <tr>
                                     <td><%= key.id %></td>
@@ -95,8 +95,7 @@
                             <% }) %>
                         </tbody>
                     </table>
-                </div>
-            <% } %>
+            </div>
         </div>
     </div>
 
@@ -188,6 +187,79 @@ document.addEventListener('click', function(e) {
     }
 });
 
+function updateApiKeysEmptyState() {
+    const hasApiKeys = document.querySelectorAll('#apiKeysTableBody tr').length > 0;
+    document.getElementById('apiKeysEmptyState').classList.toggle('d-none', hasApiKeys);
+    document.getElementById('apiKeysTableContainer').classList.toggle('d-none', !hasApiKeys);
+}
+
+function createApiKeyRow(apiKey) {
+    const row = document.createElement('tr');
+    const idCell = document.createElement('td');
+    idCell.textContent = String(apiKey.id);
+
+    const serviceCell = document.createElement('td');
+    const serviceBadge = document.createElement('span');
+    serviceBadge.className = 'badge bg-secondary';
+    serviceBadge.textContent = apiKey.service;
+    serviceCell.appendChild(serviceBadge);
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = apiKey.name || '-';
+
+    const statusCell = document.createElement('td');
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `badge ${apiKey.is_active ? 'bg-success' : 'bg-danger'}`;
+    statusBadge.textContent = apiKey.is_active ? 'Active' : 'Inactive';
+    statusCell.appendChild(statusBadge);
+
+    const createdCell = document.createElement('td');
+    createdCell.textContent = new Date(apiKey.created_at || Date.now()).toLocaleDateString();
+
+    const actionsCell = document.createElement('td');
+    const toggleButton = document.createElement('button');
+    toggleButton.type = 'button';
+    toggleButton.className = 'btn btn-sm btn-outline-primary js-toggle-key me-1';
+    toggleButton.dataset.id = String(apiKey.id);
+    toggleButton.dataset.active = String(!apiKey.is_active);
+    toggleButton.textContent = apiKey.is_active ? 'Deactivate' : 'Activate';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn btn-sm btn-outline-danger js-delete-key';
+    deleteButton.dataset.id = String(apiKey.id);
+    deleteButton.textContent = 'Delete';
+
+    actionsCell.append(toggleButton, deleteButton);
+    row.append(idCell, serviceCell, nameCell, statusCell, createdCell, actionsCell);
+    return row;
+}
+
+function addApiKeyRow(apiKey) {
+    document.getElementById('apiKeysTableBody').appendChild(createApiKeyRow(apiKey));
+    updateApiKeysEmptyState();
+}
+
+function updateApiKeyRow(id, isActive) {
+    const toggleButton = Array.from(document.querySelectorAll('.js-toggle-key'))
+        .find(button => button.dataset.id === String(id));
+    if (!toggleButton) return;
+
+    const row = toggleButton.closest('tr');
+    const statusBadge = row.children[3].querySelector('.badge');
+    statusBadge.className = `badge ${isActive ? 'bg-success' : 'bg-danger'}`;
+    statusBadge.textContent = isActive ? 'Active' : 'Inactive';
+    toggleButton.dataset.active = String(!isActive);
+    toggleButton.textContent = isActive ? 'Deactivate' : 'Activate';
+}
+
+function removeApiKeyRow(id) {
+    const deleteButton = Array.from(document.querySelectorAll('.js-delete-key'))
+        .find(button => button.dataset.id === String(id));
+    deleteButton?.closest('tr')?.remove();
+    updateApiKeysEmptyState();
+}
+
 async function addApiKey() {
     const form = document.getElementById('addApiKeyForm');
     const formData = new FormData(form);
@@ -202,14 +274,22 @@ async function addApiKey() {
 
         const result = await res.json();
         if (result.success) {
-            alert('API key added successfully');
-            location.reload();
+            addApiKeyRow({
+                id: result.id,
+                service: data.service,
+                name: data.name,
+                is_active: true,
+                created_at: new Date().toISOString()
+            });
+            form.reset();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('addApiKeyModal')).hide();
+            window.showNotification('API key added successfully', 'success');
         } else {
-            alert(result.error || 'Failed to add API key');
+            window.showNotification(result.error || 'Failed to add API key', 'error');
         }
     } catch (err) {
         console.error('Error adding API key:', err);
-        alert('Failed to add API key');
+        window.showNotification('Failed to add API key', 'error');
     }
 }
 
@@ -223,19 +303,23 @@ async function toggleApiKey(id, newStatus) {
 
         const result = await res.json();
         if (result.success) {
-            alert('API key ' + (newStatus ? 'activated' : 'deactivated'));
-            location.reload();
+            updateApiKeyRow(id, newStatus);
+            window.showNotification('API key ' + (newStatus ? 'activated' : 'deactivated'), 'success');
         } else {
-            alert(result.error || 'Failed to update API key');
+            window.showNotification(result.error || 'Failed to update API key', 'error');
         }
     } catch (err) {
         console.error('Error toggling API key:', err);
-        alert('Failed to update API key');
+        window.showNotification('Failed to update API key', 'error');
     }
 }
 
 async function deleteApiKey(id) {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
+    if (!await window.showConfirm('This API key will be permanently deleted.', {
+        title: 'Delete API key',
+        confirmText: 'Delete',
+        variant: 'danger'
+    })) return;
 
     try {
         const res = await fetch('/admin/api-keys/' + encodeURIComponent(id), {
@@ -244,14 +328,14 @@ async function deleteApiKey(id) {
 
         const result = await res.json();
         if (result.success) {
-            alert('API key deleted');
-            location.reload();
+            removeApiKeyRow(id);
+            window.showNotification('API key deleted', 'success');
         } else {
-            alert(result.error || 'Failed to delete API key');
+            window.showNotification(result.error || 'Failed to delete API key', 'error');
         }
     } catch (err) {
         console.error('Error deleting API key:', err);
-        alert('Failed to delete API key');
+        window.showNotification('Failed to delete API key', 'error');
     }
 }
 
@@ -268,7 +352,6 @@ document.addEventListener('click', function(e) {
 
     if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-id');
-        if (!confirm('Are you sure you want to delete this API key?')) return;
         deleteApiKey(id);
     }
 });
@@ -278,7 +361,7 @@ async function loadUsers() {
         const res = await fetch('/admin/api/users');
         const data = await res.json();
         console.log('Users:', data.users);
-        alert('Users loaded. Check console for details.');
+        window.showNotification('Users loaded.', 'success');
     } catch (err) {
         console.error('Error loading users:', err);
     }
@@ -289,7 +372,7 @@ async function loadSubscriptions() {
         const res = await fetch('/admin/api/subscriptions');
         const data = await res.json();
         console.log('Subscriptions:', data.subscriptions);
-        alert('Subscriptions loaded. Check console for details.');
+        window.showNotification('Subscriptions loaded.', 'success');
     } catch (err) {
         console.error('Error loading subscriptions:', err);
     }

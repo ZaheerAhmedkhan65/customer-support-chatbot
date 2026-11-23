@@ -208,10 +208,14 @@ function attachDashboardEventListeners() {
     }
 
     if (deleteSelectedBtn && !window._deleteSelectedHandlerAttached) {
-        deleteSelectedBtn.addEventListener('click', function() {
+        deleteSelectedBtn.addEventListener('click', async function() {
             const checked = Array.from(document.querySelectorAll('.bulk-check:checked')).map(cb => cb.value);
             if (checked.length === 0) return;
-            if (!confirm(`Delete ${checked.length} selected item${checked.length > 1 ? 's' : ''}?`)) return;
+            if (!await window.showConfirm(`Delete ${checked.length} selected item${checked.length > 1 ? 's' : ''}?`, {
+                title: 'Delete knowledge entries',
+                confirmText: 'Delete',
+                variant: 'danger'
+            })) return;
 
             if (deleteSelectedBtn.disabled) return;
             deleteSelectedBtn.disabled = true;
@@ -245,18 +249,18 @@ function attachDashboardEventListeners() {
                 .then(results => {
                     const failed = results.find(r => !r.success);
                     if (failed) {
-                        alert(failed.message || 'Failed to delete some items');
+                        window.showNotification(failed.message || 'Failed to delete some items', 'error');
                         deleteSelectedBtn.disabled = false;
                         updateBulkDeleteButton();
                     } else {
-                        alert('Knowledge deleted successfully!');
+                        window.showNotification('Knowledge deleted successfully!', 'success');
                         setTimeout(() => {
                             window.location.href = '/dashboard?tab=knowledge';
-                        }, 150);
+                        }, 2700);
                     }
                 })
                 .catch(() => {
-                    alert('Failed to delete some items');
+                    window.showNotification('Failed to delete some items', 'error');
                     deleteSelectedBtn.disabled = false;
                     updateBulkDeleteButton();
                 });

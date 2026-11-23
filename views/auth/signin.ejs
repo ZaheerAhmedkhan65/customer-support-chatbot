@@ -23,7 +23,7 @@
                     </div>
 
                     <% if (typeof error !=='undefined' && error) { %>
-                    <div class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                    <div data-app-notification data-app-notification-type="error" hidden>
                         <%= error %>
                     </div>
                     <% } %>

@@ -213,6 +213,8 @@ router.get('/widget-test', (req, res) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Chatbot Widget Test</title>
+            <link rel="stylesheet" href="/bootstrap.min.css">
+            <link rel="stylesheet" href="/animate.min.css">
             <style>
                 body {
                     font-family: Arial, sans-serif;
@@ -288,6 +290,8 @@ router.get('/widget-test', (req, res) => {
                 </div>
             </div>
             
+            <script src="/bootstrap.bundle.min.js"></script>
+            <script src="/js/core/notifications.js"></script>
             <script>
                 // Get org_id from URL parameter
                 const urlParams = new URLSearchParams(window.location.search);
@@ -321,10 +325,15 @@ router.get('/widget-test', (req, res) => {
                     document.getElementById('embedCode').textContent = 'No org_id provided. Please add ?org_id=your_org_id to the URL';
                 }
                 
-                function copyCode() {
+                async function copyCode() {
                     const code = document.getElementById('embedCode').textContent;
-                    navigator.clipboard.writeText(code);
-                    alert('Embed code copied to clipboard!');
+                    try {
+                        await navigator.clipboard.writeText(code);
+                        window.showNotification('Embed code copied to clipboard!', 'success');
+                    } catch (error) {
+                        console.error('Failed to copy embed code:', error);
+                        window.showNotification('Could not copy the embed code.', 'error');
+                    }
                 }
             </script>
             

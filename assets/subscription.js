@@ -1,8 +1,9 @@
 // Upgrade plan function
-function upgradePlan(planId) {
-    if (!confirm(`Are you sure you want to upgrade to the ${planId === 'professional' ? 'Professional' : 'Enterprise'} plan?`)) {
-        return;
-    }
+async function upgradePlan(planId) {
+    if (!await window.showConfirm(
+        `Are you sure you want to upgrade to the ${planId === 'professional' ? 'Professional' : 'Enterprise'} plan?`,
+        { title: 'Upgrade plan', confirmText: 'Upgrade', variant: 'primary' }
+    )) return;
 
     fetch('/api/subscription/upgrade', {
         method: 'POST',
@@ -12,14 +13,16 @@ function upgradePlan(planId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                window.location.href = '/dashboard?tab=billing';
+                window.showNotification(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard?tab=billing';
+                }, 2700);
             } else {
-                alert('Failed to upgrade plan: ' + (data.error || 'Unknown error'));
+                window.showNotification('Failed to upgrade plan: ' + (data.error || 'Unknown error'), 'error');
             }
         })
         .catch(err => {
-            alert('Error: ' + err.message);
+            window.showNotification('Error: ' + err.message, 'error');
         });
 }
 
@@ -106,7 +109,7 @@ document.addEventListener('click', function (e) {
     const planId = btn.getAttribute('data-plan');
 
     if (!planId) {
-        alert('No plan selected. Please try again.');
+        window.showNotification('No plan selected. Please try again.', 'warning');
         return;
     }
 
