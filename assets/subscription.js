@@ -4,7 +4,7 @@ function upgradePlan(planId) {
         return;
     }
 
-    fetch('/subscription/upgrade', {
+    fetch('/api/subscription/upgrade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId })
@@ -25,7 +25,7 @@ function upgradePlan(planId) {
 
 //Load subscription plans
 function loadSubscriptionPlans() {
-    fetch('/subscription/plans')
+    fetch('/api/subscription/plans')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.plans) {

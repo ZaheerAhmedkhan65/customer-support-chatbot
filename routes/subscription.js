@@ -6,7 +6,7 @@ const authenticate = require('../middleware/auth');
 const router = require('./base')();
 
 /**
- * GET /subscription/plans
+ * GET /api/subscription/plans
  * Get all available pricing plans
  */
 router.get('/plans', async (req, res) => {
@@ -36,7 +36,7 @@ router.get('/plans', async (req, res) => {
 });
 
 /**
- * GET /subscription/current
+ * GET /api/subscription/current
  * Get current user's subscription
  */
 router.get('/current', authenticate, async (req, res) => {
@@ -63,7 +63,7 @@ router.get('/current', authenticate, async (req, res) => {
 });
 
 /**
- * GET /subscription/usage
+ * GET /api/subscription/usage
  * Get current user's usage statistics
  */
 router.get('/usage', authenticate, async (req, res) => {
@@ -77,7 +77,7 @@ router.get('/usage', authenticate, async (req, res) => {
 });
 
 /**
- * POST /subscription/upgrade
+ * POST /api/subscription/upgrade
  * Upgrade subscription to a higher plan
  */
 router.post('/upgrade', authenticate, async (req, res) => {
@@ -104,7 +104,7 @@ router.post('/upgrade', authenticate, async (req, res) => {
 });
 
 /**
- * POST /subscription/downgrade
+ * POST /api/subscription/downgrade
  * Downgrade subscription to a lower plan
  */
 router.post('/downgrade', authenticate, async (req, res) => {
@@ -129,7 +129,7 @@ router.post('/downgrade', authenticate, async (req, res) => {
 });
 
 /**
- * POST /subscription/cancel
+ * POST /api/subscription/cancel
  * Cancel subscription (revert to free)
  */
 router.post('/cancel', authenticate, async (req, res) => {
@@ -148,7 +148,7 @@ router.post('/cancel', authenticate, async (req, res) => {
 });
 
 /**
- * GET /subscription/check-limit
+ * GET /api/subscription/check-limit
  * Check if user has exceeded their usage limit
  */
 router.get('/check-limit', authenticate, async (req, res) => {
@@ -172,7 +172,7 @@ router.get('/check-limit', authenticate, async (req, res) => {
 });
 
 /**
- * GET /subscription/limits
+ * GET /api/subscription/limits
  * Get subscription limits for the current user
  */
 router.get('/limits', authenticate, async (req, res) => {
@@ -192,7 +192,7 @@ router.get('/limits', authenticate, async (req, res) => {
 });
 
 /**
- * POST /subscription/verify-payment
+ * POST /api/subscription/verify-payment
  * Verify payment and activate subscription (webhook endpoint)
  * In production, this would be called by Stripe/PayPal webhook
  */

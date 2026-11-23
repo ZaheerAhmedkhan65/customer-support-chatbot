@@ -46,7 +46,7 @@ function crawlWebsite() {
     document.getElementById('crawlStatus').textContent = 'Crawling website...';
     document.getElementById('crawlProgressBar').style.width = '30%';
 
-    fetch('/api/chatbot/crawl-website', {
+    fetch('/api/crawler/crawl-website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
@@ -146,7 +146,7 @@ function importCrawledEntries() {
         keywords: crawledEntries[i].keywords
     }));
 
-    fetch('/api/chatbot/crawl-website/save', {
+    fetch('/api/crawler/crawl-website/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entries: selectedEntries })
@@ -490,7 +490,7 @@ function attachBillingEventListeners() {
 
 // Load usage and subscription data
 function loadUsageData() {
-    fetch('/subscription/usage')
+    fetch('/api/subscription/usage')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.usage) {
@@ -582,7 +582,7 @@ function cancelSubscription() {
         return;
     }
 
-    fetch('/subscription/cancel', {
+    fetch('/api/subscription/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -646,7 +646,7 @@ function downgradePlan(planId) {
         return;
     }
 
-    fetch('/subscription/downgrade', {
+    fetch('/api/subscription/downgrade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId })

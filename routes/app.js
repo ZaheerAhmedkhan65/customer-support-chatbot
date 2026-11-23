@@ -1,8 +1,16 @@
 const express = require('express');
 const authenticate = require('../middleware/auth');
+const { authorize } = require('../middleware/authorize');
 
 // Route configuration with their mount paths and protection status
+// All JSON API routes have /api prefix, view-rendering routes do not
 const routeConfig = [
+    {
+        name: 'dashboard',
+        path: '/dashboard',
+        protected: true,
+        description: 'User dashboard'
+    },
     {
         name: 'auth',
         path: '/auth',
@@ -29,7 +37,7 @@ const routeConfig = [
     },
     {
         name: 'subscription',
-        path: '/subscription',
+        path: '/api/subscription',
         protected: false,
         description: 'Subscription management'
     },
@@ -41,7 +49,7 @@ const routeConfig = [
     },
     {
         name: 'crawler',
-        path: '/api/chatbot',
+        path: '/api/crawler',
         protected: true,
         description: 'Website crawler for knowledge base import'
     },
@@ -49,6 +57,7 @@ const routeConfig = [
         name: 'admin',
         path: '/admin',
         protected: true,
+        roles: ['admin'],
         description: 'Admin panel for API keys and system management'
     }
 ];
@@ -61,6 +70,9 @@ const initializeRoutes = (app) => {
     routeConfig.forEach(config => {
         const route = require(`./${config.name}`);
         const middleware = config.protected ? [authenticate] : [];
+        if (config.roles) {
+            middleware.push(authorize(...config.roles));
+        }
         
         app.use(config.path, ...middleware, route);
         
