@@ -18,6 +18,12 @@ const routeConfig = [
         description: 'Authentication routes (signin, signup)'
     },
     {
+        name: 'pages',
+        path: '/pages',
+        protected: false,
+        description: 'Public informational pages'
+    },
+    {
         name: 'embed',
         path: '/',
         protected: false,
