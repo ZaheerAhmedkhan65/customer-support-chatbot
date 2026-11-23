@@ -4,6 +4,11 @@ const passport = require('passport');
 const Subscription = require('../models/Subscription');
 const router = require('./base')();
 
+const getPostAuthRedirect = (user) =>
+    String(user?.role || 'user').trim().toLowerCase() === 'admin'
+        ? '/admin'
+        : '/dashboard';
+
 router.get('/signup', (req, res) => {
     const error = req.cookies.error || null;
     res.clearCookie('error');
@@ -72,8 +77,7 @@ router.post('/signup', async (req, res) => {
             sameSite: 'strict'
         });
 
-        // Redirect to dashboard
-        res.redirect('/dashboard');
+        res.redirect(getPostAuthRedirect(user));
     } catch (error) {
         console.error(error);
         res.cookie('error', 'Server error', { maxAge: 5000 });
@@ -113,8 +117,7 @@ router.post('/signin', async (req, res) => {
             sameSite: 'strict'
         });
 
-        // Redirect to dashboard
-        res.redirect('/dashboard');
+        res.redirect(getPostAuthRedirect(user));
     } catch (error) {
         console.error(error);
         res.cookie('error', 'Server error', { maxAge: 5000 });
@@ -155,8 +158,7 @@ router.get('/google/callback',
         failureFlash: true
     }),
     (req, res) => {
-        // Successful authentication, redirect to dashboard.
-        res.redirect('/dashboard');
+        res.redirect(getPostAuthRedirect(req.user));
     }
 );
 
