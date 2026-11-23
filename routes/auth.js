@@ -60,7 +60,7 @@ router.post('/signup', async (req, res) => {
 
         // Create token
         const token = jwt.sign(
-            { id: user.id, org_id: user.org_id, email: user.email },
+            { id: user.id, org_id: user.org_id, email: user.email, role: user.role || 'user' },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -101,7 +101,7 @@ router.post('/signin', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, org_id: user.org_id, email: user.email },
+            { id: user.id, org_id: user.org_id, email: user.email, role: user.role || 'user' },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -122,15 +122,29 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-// Logout route
 router.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) return next(err);
+    // Clear JWT cookie
+    res.clearCookie('token');
 
-        res.clearCookie('token');
-        res.clearCookie('connect.sid');
-        res.redirect('/');
-    });
+    // Destroy session if exists (for Google OAuth users)
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Session destruction error:', err);
+            }
+        });
+    }
+
+    // Logout from passport if logged in
+    if (req.logout) {
+        req.logout((err) => {
+            if (err) {
+                console.error('Passport logout error:', err);
+            }
+        });
+    }
+
+    res.redirect('/auth/signin');
 });
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
